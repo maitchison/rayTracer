@@ -43,7 +43,7 @@ ContainerObject scene;
  */
 glm::vec3 trace(Ray ray, int depth)
 {
-	glm::vec3 backgroundCol(0.1,0.1,0.1);
+	glm::vec3 backgroundCol(0.1,0.0,0.5);
 	glm::vec3 light(10, 40, -3);
 	glm::vec3 ambientCol(0.2);   //Ambient color of light
 
@@ -213,8 +213,8 @@ void initialize()
 	//--Add the above to the list of scene objects.
 	scene.add(plane); 
     scene.add(sphere1); 
-    scene.add(Polyhedron::Cube())
-    //scene.add(sphere2); 
+    scene.add(Polyhedron::Cube(glm::vec3(3,-3,-15)));
+    scene.add(sphere2); 
     //scene.add(sphere3); 
 }
 

@@ -56,7 +56,10 @@ public:
     // this objects material.
 	Material* material;
     
-	SceneObject() {}
+	SceneObject() {
+        material = new Material();
+    }
+    
     virtual RayIntersectionResult intersect(Ray ray) {
         return RayIntersectionResult();
     }
