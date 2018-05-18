@@ -4,6 +4,9 @@
 * See Lab07.pdf for details.
 *=========================================================================
 */
+
+#include <stdio.h>
+
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -11,6 +14,7 @@
 #include "Sphere.h"
 #include "Plane.h"
 #include "SceneObject.h"
+#include "ContainerObject.h"
 #include "Ray.h"
 #include "math.h"
 #include <GL/glut.h>
@@ -26,36 +30,37 @@ const float XMAX =  WIDTH * 0.5;
 const float YMIN = -HEIGHT * 0.5;
 const float YMAX =  HEIGHT * 0.5;
 
-vector<SceneObject*> sceneObjects;  //A global list containing pointers to objects in the scene
+// Global list of scene objects.
+ContainerObject scene;
 
 
-//---The most important function in a ray tracer! ---------------------------------- 
-//   Computes the colour value obtained by tracing a ray and finding its 
-//     closest point of intersection with objects in the scene.
-//----------------------------------------------------------------------------------
-glm::vec3 trace(Ray ray, int step)
+/**
+ * Computes the colour value obtained by tracing a ray and finding its 
+ * closest point of intersection with objects in the scene.
+ */
+glm::vec3 trace(Ray ray, int depth)
 {
-	glm::vec3 backgroundCol(0);
+	glm::vec3 backgroundCol(0.1,0.1,0.1);
 	glm::vec3 light(10, 40, -3);
 	glm::vec3 ambientCol(0.2);   //Ambient color of light
 
     float shinyness = 4.0;
 
-    ray.closestPt(sceneObjects);		//Compute the closest point of intersetion of objects with the ray
+    RayIntersectionResult intersection = scene.intersect(ray);
 
-    if(ray.xindex == -1) return backgroundCol;      //If there is no intersection return background colour
+    if (!intersection.didCollide()) return backgroundCol;      //If there is no intersection return background colour
 
-    glm::vec3 materialCol = sceneObjects[ray.xindex]->getColor(); 
+    glm::vec3 materialCol = intersection.target->getColor(); 
 
     // diffuse light
-    glm::vec3 normalVector = sceneObjects[ray.xindex]->normal(ray.xpt);
-    glm::vec3 lightVector = glm::normalize(light - ray.xpt);
+    glm::vec3 normalVector = intersection.normal;
+    glm::vec3 lightVector = glm::normalize(light - intersection.location);
     float diffuseLight = glm::dot(lightVector, normalVector);
     if (diffuseLight < 0) diffuseLight = 0;
 
     // specular light
     glm::vec3 reflVector = glm::reflect(-lightVector, normalVector);
-    glm::vec3 viewVector = glm::normalize(glm::vec3(ray.xpt.x, ray.xpt.y, -ray.xpt.z));
+    glm::vec3 viewVector = glm::normalize(glm::vec3(intersection.location.x, intersection.location.y, -intersection.location.z));
     float specularLight = glm::dot(reflVector, viewVector);
     if (specularLight < 0) {
         specularLight = 0;
@@ -64,20 +69,21 @@ glm::vec3 trace(Ray ray, int step)
     }
 
     // shadow
-    Ray shadow(ray.xpt, lightVector);
-    shadow.closestPt(sceneObjects);
-    if (shadow.xindex >= 0 && shadow.xdist < lightVector.length()) {
+    Ray shadow(intersection.location, lightVector);
+    RayIntersectionResult shadowIntersection = scene.intersect(shadow);    
+    if (shadowIntersection.didCollide() && shadowIntersection.t < lightVector.length()) {
         diffuseLight = specularLight = 0;
     }
 
     // apply the lighting model
     glm::vec3 colorSum = ambientCol * materialCol + diffuseLight * materialCol + specularLight;
     
-    // reflection
-    if(ray.xindex == 0 && step < MAX_STEPS) {
+    // reflection    
+    if(intersection.target->material.reflectivity > 0 && depth < MAX_STEPS) {
+        printf("reflect\n");
         glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVector);
-        Ray reflectedRay(ray.xpt, reflectedDir);
-        glm::vec3 reflectedCol = trace(reflectedRay, step+1); //Recursion!
+        Ray reflectedRay(intersection.location, reflectedDir);
+        glm::vec3 reflectedCol = trace(reflectedRay, depth+1); //Recursion!
         colorSum = colorSum + (0.8f*reflectedCol);
     }
 
@@ -111,8 +117,7 @@ void display()
 
 		    glm::vec3 dir(xp+0.5*cellX, yp+0.5*cellY, -EDIST);	//direction of the primary ray
 
-		    Ray ray = Ray(eye, dir);		//Create a ray originating from the camera in the direction 'dir'
-			ray.normalize();				//Normalize the direction of the ray to a unit vector
+		    Ray ray = Ray(eye, dir);		//Create a ray originating from the camera in the direction 'dir'			
 		    glm::vec3 col = trace (ray, 1); //Trace the primary ray and get the colour value
 
 			glColor3f(col.r, col.g, col.b);
@@ -141,25 +146,27 @@ void initialize()
     glClearColor(0, 0, 0, 1);
 
 	//-- Create a pointer to a sphere object
-	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -90.0), 15.0, glm::vec3(0, 0, 1));
-    Sphere *sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -50.0), 4.0, glm::vec3(1, 0, 0));
-    Sphere *sphere3 = new Sphere(glm::vec3(+8.0, -8.0, -70.0), 4.0, glm::vec3(0, 1, 0));
+	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -90.0), 15.0);
+    Sphere *sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -50.0), 4.0);
+    Sphere *sphere3 = new Sphere(glm::vec3(+8.0, -8.0, -70.0), 4.0);
 
-    Plane *plane = new Plane (glm::vec3(-20., -20, -40), //Point A
-        glm::vec3(20., -20, -40), //Point B
-        glm::vec3(20., -20, -200), //Point C
-        glm::vec3(-20., -20, -200), //Point D
-        glm::vec3(0.5, 0.5, 0) //Colour
+    Plane *plane = new Plane(glm::vec3(-20., -20, -40), 
+        glm::vec3(20., -20, -40), 
+        glm::vec3(20., -20, -200), 
+        glm::vec3(-20., -20, -200) 
     ); 
 
+    sphere1->material = Material::Reflective(1,0,0);
+    sphere2->material = Material(0,1,0);
+    sphere3->material = Material(0,0,1);
+    plane->material = Material(0,1,1);
+
 	//--Add the above to the list of scene objects.
-	sceneObjects.push_back(sphere1); 
-    sceneObjects.push_back(sphere2); 
-    sceneObjects.push_back(sphere3); 
-    sceneObjects.push_back(plane); 
+	scene.add(plane); 
+    scene.add(sphere1); 
+    scene.add(sphere2); 
+    scene.add(sphere3); 
 }
-
-
 
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);

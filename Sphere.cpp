@@ -12,27 +12,34 @@
 /**
 * Sphere's intersection method.  The input is a ray (pos, dir). 
 */
-float Sphere::intersect(glm::vec3 posn, glm::vec3 dir)
+RayIntersectionResult Sphere::intersect(Ray ray)
 {
-    glm::vec3 vdif = posn - center;
-    float b = glm::dot(dir, vdif);
+    glm::vec3 vdif = ray.pos - center;
+    float b = glm::dot(ray.dir, vdif);
     float len = glm::length(vdif);
     float c = len*len - radius*radius;
     float delta = b*b - c;
    
-	if(fabs(delta) < 0.001) return -1.0; 
-    if(delta < 0.0) return -1.0;
+	if(fabs(delta) < 0.001) return RayIntersectionResult(); 
+    if(delta < 0.0) return RayIntersectionResult();
 
     float t1 = -b - sqrt(delta);
     float t2 = -b + sqrt(delta);
-    if(fabs(t1) < 0.001 )
-    {
-        if (t2 > 0) return t2;
-        else t1 = -1.0;
-    }
-    if(fabs(t2) < 0.001 ) t2 = -1.0;
+    
+    RayIntersectionResult result = RayIntersectionResult();
+    result.t = (t1 < t2) ? t1: t2;
 
-	return (t1 < t2)? t1: t2;
+    // ray does not intersect
+    if (result.t < 0) {
+        result.t = -1;
+        return result;
+    } 
+
+    result.location = ray.pos + ray.dir * result.t;
+    result.normal = normal(result.location);
+    result.target = this;
+    
+    return result;
 }
 
 /**

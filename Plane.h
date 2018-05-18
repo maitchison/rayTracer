@@ -6,32 +6,44 @@
 *  methods intersect() and normal().
 -------------------------------------------------------------*/
 
-#ifndef H_PLANE
-#define H_PLANE
-
+#pragma once
 #include <glm/glm.hpp>
 #include "SceneObject.h"
 
 class Plane : public SceneObject
 {
 private:
-    glm::vec3 a, b, c, d;  //The four vertices
+    glm::vec3 v1, v2, v3, v4;  // The four vertices bounding the plane    
+    glm::vec3 normal;          // The planes normal. 
+
+    bool bounded; // If true plane is defined by the four vertices, otherwise it is defined by first point and normal.
+    
 
 public:	
 	Plane(void);
 	
-    Plane(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc, glm::vec3 pd, glm::vec3 col)
-		: a(pa), b(pb), c(pc), d(pd)
+    /** Creates a plane as defined by 4 vertices. */
+    Plane(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4)
 	{
-		color = col;
+        this->v1 = v1;
+        this->v2 = v2;
+        this->v3 = v3;
+        this->v4 = v4;
+        this->bounded = true;
+        // note: in constract to the lab we calculate this on initialization and reuse it, which will be faster than recalculating it each time.
+        this->normal = glm::normalize(glm::cross(v2-v1, v4-v1)); 		
 	};
 
-	bool isInside(glm::vec3 pt);
-	
-	float intersect(glm::vec3 posn, glm::vec3 dir);
-	
-	glm::vec3 normal(glm::vec3 pt);
+    /** Creates a plane as defined by a point and normal. */
+    Plane(glm::vec3 v1, glm::vec3 normal)
+	{
+        this->v1 = v1;
+        this->normal = glm::normalize(normal);
+        this->bounded = false;        
+	};
 
+	bool isInside(glm::vec3 p);
+	
+	RayIntersectionResult intersect(Ray ray) override;
+	
 };
-
-#endif //!H_PLANE

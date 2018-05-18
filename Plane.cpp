@@ -9,20 +9,19 @@
 #include "Plane.h"
 #include <math.h>
 
-
 /**
-* Checks if a point pt is inside the current polygon
-* Implement a point inclusion test using 
-* member variables a, b, c, d.
+* Returns if a point p is inside the plane or not.  
+* Point p is assumed to lie on the plane, and if it doesn't it's projection onto the plane is used.
+* For infinite planes all points are considered 'inside' the bounds.
 */
-bool Plane::isInside(glm::vec3 pt)
+bool Plane::isInside(glm::vec3 p)
 {
-    glm::vec3 n = normal(glm::vec3(0,0,0));
+    if (!bounded) return true;
     
-    float a1 = glm::dot(glm::cross(b-a,pt-a), n);
-    float a2 = glm::dot(glm::cross(c-b,pt-b), n);
-    float a3 = glm::dot(glm::cross(d-c,pt-c), n);
-    float a4 = glm::dot(glm::cross(a-d,pt-d), n);	
+    float a1 = glm::dot(glm::cross(v2-v1,p-v1), normal);
+    float a2 = glm::dot(glm::cross(v3-v2,p-v2), normal);
+    float a3 = glm::dot(glm::cross(v4-v3,p-v3), normal);
+    float a4 = glm::dot(glm::cross(v1-v4,p-v4), normal);	
 	
 	return (a1 > 0 && a2 > 0 && a3 > 0 && a4 > 0);
 }
@@ -30,30 +29,18 @@ bool Plane::isInside(glm::vec3 pt)
 /**
 * Plane's intersection method.  The input is a ray (pos, dir). 
 */
-float Plane::intersect(glm::vec3 posn, glm::vec3 dir)
-{
-	glm::vec3 n = normal(posn);
-	glm::vec3 vdif = a - posn;
-	float vdotn = glm::dot(dir, n);
-	if(fabs(vdotn) < 1.e-4) return -1;
-    float t = glm::dot(vdif, n)/vdotn;
-	if(fabs(t) < 0.0001) return -1;
-	glm::vec3 q = posn + dir*t;
-	if(isInside(q)) return t;
-    else return -1;
+RayIntersectionResult Plane::intersect(Ray ray)
+{	
+	glm::vec3 vdif = v1 - ray.pos;
+	float vdotn = glm::dot(ray.dir, normal);
+	if(fabs(vdotn) < 1.e-4) return RayIntersectionResult();
+    float t = glm::dot(vdif, normal)/vdotn;
+	if(fabs(t) < 0.0001) return RayIntersectionResult();
+	glm::vec3 q = ray.pos + ray.dir*t;
+	if (isInside(q)) {        
+        return RayIntersectionResult(this, t, q, normal);
+    } 
+    else {
+        return RayIntersectionResult();
+    }
 }
-
-/**
-* Returns the unit normal vector at a given point.
-* Compute the plane's normal vector using 
-* member variables a, b, c, d.
-* The parameter pt is a dummy variable and is not used.
-*/
-glm::vec3 Plane::normal(glm::vec3 pt)
-{
-	glm::vec3 n = glm::normalize(glm::cross(b-a, d-a));
-    return n;
-}
-
-
-

@@ -6,8 +6,7 @@
 *  methods intersect() and normal().
 -------------------------------------------------------------*/
 
-#ifndef H_SPHERE
-#define H_SPHERE
+#pragma once
 #include <glm/glm.hpp>
 #include "SceneObject.h"
 
@@ -25,20 +24,16 @@ private:
 public:
 	Sphere()
 		: center(glm::vec3(0)), radius(1)  //Default constructor creates a unit sphere
-	{
-		color = glm::vec3(1);
+	{		
 	};
 
-    Sphere(glm::vec3 c, float r, glm::vec3 col)
+    Sphere(glm::vec3 c, float r)
 		: center(c), radius(r)
-	{
-		color = col;
+	{	
 	};
 
-	float intersect(glm::vec3 posn, glm::vec3 dir);
+	RayIntersectionResult intersect(Ray ray) override;
 
 	glm::vec3 normal(glm::vec3 p);
 
 };
-
-#endif //!H_SPHERE
