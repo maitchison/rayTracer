@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "Ray.h"
 #include "SceneObject.h"
 
 #include <glm/glm.hpp>

@@ -66,11 +66,11 @@ public:
 
 	virtual ~SceneObject() {}
 
-	glm::vec3 getColor() {
+	glm::vec4 getColor() {
         return material.color;
     }
 
-	void setColor(glm::vec3 col) {
+	void setColor(glm::vec4 col) {
         this->material.color = col;
     }
 };
