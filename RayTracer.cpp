@@ -13,8 +13,11 @@
 #include <glm/glm.hpp>
 #include "Sphere.h"
 #include "Plane.h"
+
 #include "SceneObject.h"
 #include "ContainerObject.h"
+#include "Polyhedron.h"
+
 #include "Ray.h"
 #include "math.h"
 #include <GL/glut.h>
@@ -210,8 +213,9 @@ void initialize()
 	//--Add the above to the list of scene objects.
 	scene.add(plane); 
     scene.add(sphere1); 
-    scene.add(sphere2); 
-    scene.add(sphere3); 
+    scene.add(Polyhedron::Cube())
+    //scene.add(sphere2); 
+    //scene.add(sphere3); 
 }
 
 int main(int argc, char *argv[]) {
