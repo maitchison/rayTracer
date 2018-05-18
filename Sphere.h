@@ -36,4 +36,6 @@ public:
 
 	glm::vec3 normal(glm::vec3 p);
 
+    glm::vec2 getUV(glm::vec3 pos) override;
+
 };

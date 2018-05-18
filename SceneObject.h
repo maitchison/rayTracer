@@ -26,8 +26,6 @@ struct RayIntersectionResult
 public:
     // the location of the ray intersection.
     glm::vec3 location;    
-    // uv co-ordantes at the point of collision.
-    glm::vec2 uv;
     // surface normal at the point of collision.
     glm::vec3 normal;
     // pointer to object we collided with.
@@ -44,12 +42,11 @@ public:
     RayIntersectionResult() {};
 
     /** Creates a ray intersection result with given parameters. */
-    RayIntersectionResult(SceneObject* target, float t, glm::vec3 location, glm::vec3 normal = glm::vec3(), glm::vec2 uv = glm::vec2()) {
+    RayIntersectionResult(SceneObject* target, float t, glm::vec3 location, glm::vec3 normal = glm::vec3()) {
         this->target = target;
         this->t = t;
         this->location = location;
-        this->normal = normal;
-        this->uv = uv;
+        this->normal = normal;        
     }
 };
 
@@ -57,20 +54,15 @@ class SceneObject
 {
 public:
     // this objects material.
-	Material material;
-
+	Material* material;
+    
 	SceneObject() {}
     virtual RayIntersectionResult intersect(Ray ray) {
         return RayIntersectionResult();
     }
 
-	virtual ~SceneObject() {}
+	virtual ~SceneObject() {}    
 
-	glm::vec4 getColor() {
-        return material.color;
-    }
+    virtual glm::vec2 getUV(glm::vec3 pos) {return glm::vec2(); };
 
-	void setColor(glm::vec4 col) {
-        this->material.color = col;
-    }
 };

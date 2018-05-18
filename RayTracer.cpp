@@ -50,7 +50,18 @@ glm::vec3 trace(Ray ray, int depth)
 
     if (!intersection.didCollide()) return backgroundCol;      //If there is no intersection return background colour
 
-    Material material = intersection.target->material;
+    Material* material = intersection.target->material;
+
+    // we work out what type of material this is (3d materials could be supported in the future) and then calculate the required information.
+    // uv calculations can be a bit slow so we do them only when required not with all traces (i.e. shadow calcuations)
+    bool isMaterial2d = dynamic_cast<Material2d*>(material); 
+    glm::vec4 diffuseColor;
+    if (isMaterial2d) {
+        glm::vec2 uv = intersection.target->getUV(intersection.location);
+        diffuseColor = ((Material2d*)material)->getColor(uv);
+    } else {
+        diffuseColor = material->getColor();
+    }
 
     // diffuse light
     glm::vec3 normalVector = intersection.normal;
@@ -77,11 +88,11 @@ glm::vec3 trace(Ray ray, int depth)
 
     // apply the lighting model
     // note: transpariency (alpha) only applies to the ambient and diffuse, the specular remains the same (as this is really a reflection)
-    float alpha = material.color.a;
-    glm::vec3 colorSum = (ambientCol * glm::vec3(material.color) + diffuseLight * glm::vec3(material.color)) * alpha + specularLight;
+    float alpha = material->color.a;
+    glm::vec3 colorSum = (ambientCol * glm::vec3(diffuseColor) + diffuseLight * glm::vec3(diffuseColor)) * alpha + specularLight;
     
     // reflection    
-    if(material.reflectivity > 0 && depth < MAX_STEPS) {
+    if(material->reflectivity > 0 && depth < MAX_STEPS) {
         glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVector);
         Ray reflectedRay(intersection.location, reflectedDir);
         glm::vec3 reflectedCol = trace(reflectedRay, depth+1); 
@@ -91,18 +102,18 @@ glm::vec3 trace(Ray ray, int depth)
     // transparency 
     // note: we don't bump up the depth counter here as we can't recurse infinitely with transparency.
     if (alpha < 1) {
-        if (material.refractionIndex == 1.0) {        
+        if (material->refractionIndex == 1.0) {        
     
             // start the ray a little further on from where we hit.
             Ray transmittedRay = Ray(intersection.location + 0.001f * ray.dir, ray.dir);
             glm::vec3 transmittedCol = trace(transmittedRay, depth); 
-            colorSum = colorSum + (1.0f-material.color.a)*transmittedCol;
+            colorSum = colorSum + (1.0f-material->color.a)*transmittedCol;
             
         } else {
 
-            material.refractionIndex = 1.05f;
+            material->refractionIndex = 1.05f;
 
-            glm::vec3 refractedDir = glm::refract(ray.dir, intersection.normal, 1.0f/material.refractionIndex);
+            glm::vec3 refractedDir = glm::refract(ray.dir, intersection.normal, 1.0f/material->refractionIndex);
 
             Ray refractedRay = Ray(intersection.location + refractedDir * 0.001f , refractedDir);
             
@@ -111,10 +122,10 @@ glm::vec3 trace(Ray ray, int depth)
             RayIntersectionResult exitPoint = intersection.target->intersect(refractedRay);
 
             if (exitPoint.didCollide()) {
-                glm::vec3 exitDir = glm::refract(refractedDir, -exitPoint.normal, material.refractionIndex);
+                glm::vec3 exitDir = glm::refract(refractedDir, -exitPoint.normal, material->refractionIndex);
                 Ray exitRay = Ray(exitPoint.location + exitDir * 0.001f, exitDir);
                 glm::vec3 refractedCol = trace(exitRay, depth+1); 
-                colorSum = colorSum + (1.0f-material.color.a)*refractedCol;
+                colorSum = colorSum + (1.0f-material->color.a)*refractedCol;
             } else {
                 // this case shouldn't happen, but might due to rounding... just ignore (i.e. use black color)
                 colorSum = glm::vec3(1,0,1);
@@ -191,10 +202,10 @@ void initialize()
         glm::vec3(-20., -20, -200) 
     ); 
 
-    sphere1->material = Material::Refractive(1.1);
-    sphere2->material = Material(0,1,0);
-    sphere3->material = Material(0,0,1);
-    plane->material = Material(0,1,1);
+    sphere1->material = new Material();
+    sphere2->material = new CheckerboardMaterial();
+    sphere3->material = new Material(0,0,1);
+    plane->material = new CheckerboardMaterial();
 
 	//--Add the above to the list of scene objects.
 	scene.add(plane); 

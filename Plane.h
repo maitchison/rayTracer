@@ -34,16 +34,23 @@ public:
         this->normal = glm::normalize(glm::cross(v2-v1, v4-v1)); 		
 	};
 
-    /** Creates a plane as defined by a point and normal. */
-    Plane(glm::vec3 v1, glm::vec3 normal)
+    /** Creates a plane as defined by a point a normal, and an 'up' direction. */
+    Plane(glm::vec3 v1, glm::vec3 normal, glm::vec3 up)
 	{
         this->v1 = v1;
         this->normal = glm::normalize(normal);
         this->bounded = false;        
+
+        // we need these points for proper uv mapping.  a point and a normal define a plane, but not it's orientation, which is why we 
+        // need the 'up' vector.
+        this->v2 = v1+up;
+        this->v4 = v1+glm::cross(up, normal);
 	};
 
 	bool isInside(glm::vec3 p);
 	
 	RayIntersectionResult intersect(Ray ray) override;
+
+    glm::vec2 getUV(glm::vec3 pos) override;
 	
 };
