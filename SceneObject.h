@@ -62,8 +62,9 @@ public:
     // the anchor point of the object.
     glm::vec3 location;
     
-	SceneObject() {
-        material = new Material();
+	SceneObject(glm::vec3 location = glm::vec3(0,0,0)) {
+        this->location = location;
+        this->material = new Material();
     }
     
     virtual RayIntersectionResult intersect(Ray ray) {

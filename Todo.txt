@@ -20,18 +20,25 @@ todo:
 Feature list:
 [*] Cylinder primative
 [*] Refractive objects
+[*] New materials system including bitmap textures.
+[*] Normal mapping :)
+[*] implment new camera class
+[*] progressive render with 2 passses
+[*] anti aliasing
 
 Maybe do in the future?
 
 Todo:
 
-[ ] materials system including texture sampling.
-[ ] anti aliasing
+
+
+[ ] material lighting properies (shininess, etc)
 [ ] multiple lights
-[ ] progressive rendering
-[ ] container bounds (just a sphere is fine)
-[ ] multiple lights
+[ ] camera movement / rotation
+
 [ ] local transforms (scale, rotation, translation)
+
+[ ] container bounds (just a sphere is fine)
 
 [ ] global illumination model (ambient occlusion)
 [ ] polygon meshes

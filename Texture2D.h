@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Tools.h"
+#include "Utils.h"
 #include <stdio.h>
 #include <vector>
 #include <glm/glm.hpp>
@@ -51,8 +51,8 @@ public:
                 v = v - (int)v;
                 break;
             case TC_CLAMP:
-                u = clip(u, 0, 1);
-                v = clip(v, 0, 1);
+                u = clipf(u, 0, 1);
+                v = clipf(v, 0, 1);
                 break;
         }
 

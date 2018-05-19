@@ -1,4 +1,4 @@
-#include "Tools.h"
+#include "Utils.h"
 
 namespace glm {
 
@@ -33,9 +33,30 @@ void loadFile(std::vector<unsigned char>& buffer, const std::string& filename)
 }
 
 /** Returns x cliped to between a and b. */
-float clip(float x, float a, float b)
+float clipf(float x, float a, float b)
 {
     if (x < a) return a;
     if (x > b) return b;
     return x;
+}
+
+/** Returns x cliped to between a and b. */
+int clipi(int x, int a, int b)
+{
+    if (x < a) return a;
+    if (x > b) return b;
+    return x;
+}
+
+float randf() {
+    return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+}
+
+/** Convert color to 24bit form. */
+int colorToInt24(Color color)
+{
+    int _r = clipi(int(color.r * 255), 0, 255);
+    int _g = clipi(int(color.g * 255), 0, 255);
+    int _b = clipi(int(color.b * 255), 0, 255);
+    return (_r)+(_g << 8) + (_b << 16);
 }
