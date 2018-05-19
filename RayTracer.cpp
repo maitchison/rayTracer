@@ -59,8 +59,7 @@ glm::vec3 trace(Ray ray, int depth)
     // we check if uv co-ords need calculating as they can be quite slow (transidental functions for example).  
     glm::vec2 uv = glm::vec2(0,0);
     if (material->needsUV()) {        
-        uv = intersection.target->getUV(intersection.location);
-        printf("uv %f %f\n", uv.x, uv.y);
+        uv = intersection.target->getUV(intersection.location);        
     }
 
     // sample materials properties
@@ -203,7 +202,7 @@ void initialize()
         glm::vec3(-20, -20, -200) 
     ); 
 
-    Cylinder* cylinder = new Cylinder(glm::vec3(0,-19,-90), 5, 10);
+    Cylinder* cylinder = new Cylinder(glm::vec3(20,-20,-90), 5, 10);
 
     sphere1->material = Material::Default();
     sphere2->material = Material::Checkerboard();
@@ -211,11 +210,12 @@ void initialize()
     plane->material = Material::Checkerboard();
     cylinder->material =  Material::Default(glm::vec4(1,0,0,1));
 
-    plane->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+    sphere1->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png");
+    //sphere1->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
 
 	//--Add the above to the list of scene objects.
 	scene.add(plane); 
-    //scene.add(sphere1); 
+    scene.add(sphere1); 
     //scene.add(Polyhedron::Cube());
     //scene.add(sphere2); 
     //scene.add(sphere3); 
