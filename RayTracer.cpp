@@ -11,14 +11,15 @@
 #include <cmath>
 #include <vector>
 #include <glm/glm.hpp>
-#include "Sphere.h"
-#include "Plane.h"
 
 #include "SceneObject.h"
 #include "ContainerObject.h"
+#include "Ray.h"
+#include "Sphere.h"
+#include "Plane.h"
+#include "Cylinder.h"
 #include "Polyhedron.h"
 
-#include "Ray.h"
 #include "math.h"
 #include <GL/glut.h>
 using namespace std;
@@ -195,27 +196,31 @@ void initialize()
     glClearColor(0, 0, 0, 1);
 
 	//-- Create a pointer to a sphere object
-	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -90.0), 15.0);
-    Sphere *sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -50.0), 4.0);
-    Sphere *sphere3 = new Sphere(glm::vec3(+8.0, -8.0, -70.0), 4.0);
+	Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -90.0), 15.0);
+    Sphere* sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -50.0), 4.0);
+    Sphere* sphere3 = new Sphere(glm::vec3(+8.0, -8.0, -70.0), 4.0);
 
-    Plane *plane = new Plane(glm::vec3(-20., -20, -40), 
-        glm::vec3(20., -20, -40), 
-        glm::vec3(20., -20, -200), 
-        glm::vec3(-20., -20, -200) 
+    Plane* plane = new Plane(glm::vec3(-20, -20, -40), 
+        glm::vec3(20, -20, -40), 
+        glm::vec3(20, -20, -200), 
+        glm::vec3(-20, -20, -200) 
     ); 
+
+    Cylinder* cylinder = new Cylinder(glm::vec3(0,-19,-90), 5, 10);
 
     sphere1->material = new Material();
     sphere2->material = new CheckerboardMaterial();
     sphere3->material = new Material(0,0,1);
     plane->material = new CheckerboardMaterial();
+    cylinder->material = new Material(1,0,0);
 
 	//--Add the above to the list of scene objects.
 	scene.add(plane); 
-    scene.add(sphere1); 
-    scene.add(Polyhedron::Cube(glm::vec3(3,-3,-15)));
-    scene.add(sphere2); 
+    //scene.add(sphere1); 
+    //scene.add(Polyhedron::Cube());
+    //scene.add(sphere2); 
     //scene.add(sphere3); 
+    scene.add(cylinder);
 }
 
 int main(int argc, char *argv[]) {

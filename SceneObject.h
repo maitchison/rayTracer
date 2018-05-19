@@ -55,6 +55,9 @@ class SceneObject
 public:
     // this objects material.
 	Material* material;
+
+    // the anchor point of the object.
+    glm::vec3 location;
     
 	SceneObject() {
         material = new Material();

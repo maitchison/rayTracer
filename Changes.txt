@@ -1,0 +1,21 @@
+Refactored some of the code
+(input to many functions is now a ray instead of pos / dir)
+cleaned up variable names a bit
+
+
+Added a material class to record objects material properties
+intersecting a ray with an object now returns a CollisionResult instead of just the 't' parameter.  This has pros and cons.  The advantage is that it is often better to calculate all properties in one go (for example imagine tracing to hit a mesh, then trying a calculate the normal, this would be difficult / slow).  The disadvantage is that certian properties (such as uv) are calculated even if they are not needed.  One solution to this would be to have a quick intersect (just t) and a slower full calculation.
+
+Created generic object containers.
+These can be powerful, in the future I'll add bounds testing to them and also transforms, improving both performance and creating a scene graph structure.
+
+
+todo:
+[*] refraction
+[*] uv / texture mapping (planar, sphericial)
+[ ] cubes
+[ ] container bounds (just a sphere is fine)
+[ ] multiple lights
+[ ] local transforms (scale, rotation, translation)
+
+[ ] global illumination model.

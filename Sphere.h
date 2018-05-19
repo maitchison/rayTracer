@@ -17,19 +17,21 @@
 class Sphere : public SceneObject
 {
 
-private:
-    glm::vec3 center;
+private:    
     float radius;
 
 public:
-	Sphere()
-		: center(glm::vec3(0)), radius(1)  //Default constructor creates a unit sphere
+
+    /** Create a default unit sphere. */
+	Sphere(): SceneObject() 
 	{		
+        this->radius = 1;
 	};
 
-    Sphere(glm::vec3 c, float r)
-		: center(c), radius(r)
+    Sphere(glm::vec3 location, float radius) : SceneObject()
 	{	
+        this->location = location;
+        this->radius = radius;
 	};
 
 	RayIntersectionResult intersect(Ray ray) override;

@@ -17,7 +17,7 @@
 */
 RayIntersectionResult Sphere::intersect(Ray ray)
 {    
-    glm::vec3 vdif = ray.pos - center;
+    glm::vec3 vdif = ray.pos - location;
     float b = glm::dot(ray.dir, vdif);
     float len2 = glm::dot(vdif, vdif);
     float c = len2 - radius*radius;
@@ -53,7 +53,7 @@ RayIntersectionResult Sphere::intersect(Ray ray)
 */
 glm::vec3 Sphere::normal(glm::vec3 p)
 {
-    return glm::normalize(p - center);    
+    return glm::normalize(p - location);    
 }
 
 
@@ -63,7 +63,7 @@ glm::vec3 Sphere::normal(glm::vec3 p)
 glm::vec2 Sphere::getUV(glm::vec3 pos)
 {
 	// spherical mapping	
-	pos = (pos - center) / radius;
+	pos = (pos - location) / radius;
 	float u = 0.5f + (atan2(pos.z, pos.x) / (M_PI * 2));
 	float v = 0.5f - (asin(pos.y) / M_PI);
 	return glm::vec2(u, v);
