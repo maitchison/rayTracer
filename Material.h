@@ -1,90 +1,87 @@
+#pragma once
+
 /**
  * Material Class
  * 
  * Defines an objects material, such as lighting properties, reflections, refraction etc. 
  */
 
-#pragma once
 #include <glm/glm.hpp>
-#include <stdio.h>
+
+#include "Tools.h"
+#include "Texture2D.h"
+
 
 class Material
 {
 public:
 
-    // the materials diffuse color, where alpha is the 4th component. 
-	glm::vec4 color;
-
-    // how much the material is reflective 1=pefect mirror.
-    float reflectivity = 0.0f;
-
-    // refractive index of object.  Must set material diffuse alpha to see this.
-    float refractionIndex = 1.0f;
+    // materials have colors and textures for diffuse.  If the texture is not assigned the color is used, if the 
+    // texture is assigned is it modulated with the color.
     
-	Material() {
-        this->color = glm::vec4(0.5,0.5,0.5,1); ///default color...
+    glm::vec4 diffuseColor;                 // materials color (used for ambient color aswell)
+	Texture2D* diffuseTexture=NULL;         // the materials diffuse texture
+    Texture2D* normalTexture=NULL;          // the normal map for the texture
+    glm::vec3 specularColor;                // specular reflection color    
+
+    // refraction / reflection properties
+    float reflectivity = 0.0f;              // how much the material is reflective 1=pefect mirror.
+    float refractionIndex = 1.0f;           // refractive index of object.  Must set material diffuse alpha to see this.    
+    float shininess = 25.0f;                // how shiny the object is 
+    
+    /* Create a default white material. */
+	Material() {        
+        this->diffuseColor = glm::vec4(1,1,1,1);
+        this->specularColor = glm::vec3(1,1,1);
     }    
 
-    Material(float r, float g, float b, float reflectivity = 0) {
-        this->color = glm::vec4(r,g,b,1);
-        this->reflectivity = reflectivity;
-    }    
-
-    /** Get material color. */
-    virtual glm::vec4 getColor() {
-        return color;
-    }
-    
-    // Creates a default material. 
-    static Material Default(float r,float g,float b)
+    /** Returns if this material requires UV co-ordantes or not */
+    bool needsUV()
     {
-        return Material(r,g,b);
+        return (diffuseTexture || normalTexture);
     }
 
-    // Creates a reflective material. 
-    static Material Reflective(float r,float g,float b)
-    {
-        return Material(r,g,b,0.5f);
+    /** Gets diffuse color of material at given uv co-ord */
+    glm::vec4 getDiffuseColor(glm::vec2 uv = glm::vec2(0,0)) {
+        if (diffuseTexture) {
+            return diffuseColor * diffuseTexture->sample(uv.x, uv.y);
+        } else {
+            return diffuseColor;
+        }
     }
 
-    // Creates a refractive material. 
-    static Material Refractive(float refractionIndex)
+    // Creates a default material with given diffuse color. 
+    static Material* Default(glm::vec4 color = glm::vec4(1,1,1,1))
     {
-        Material material = Material();
-        material.color.a = 0.1;
-        material.refractionIndex = refractionIndex;
+        Material* material = new Material();
+        material->diffuseColor = color;
         return material;
     }
-};
 
-/** 2d uv based material. */
-class Material2d : public Material
-{
-public:
-
-    /** Returns color at given uv co-ords. */
-    virtual glm::vec4 getColor(glm::vec2 uv) {	
-        return color;
-    }
-};
-
-/** Checkerboard pattern */
-class CheckerboardMaterial : public Material2d
-{
-private:
-    float scale;
-public:
-
-    CheckerboardMaterial(glm::vec4 color = glm::vec4(1,1,1,1)) {      
-        this->color = color;
-        this->scale = 32.0f;
+    // Creates a default reflective material. 
+    static Material* Reflective(glm::vec4 color = glm::vec4(1,1,1,1), float reflectivity = 0.5f)
+    {
+        Material* material = new Material();
+        material->diffuseColor = color;
+        material->reflectivity = reflectivity;
+        return material;
     }
 
-    /** Returns color at given uv co-ords. */
-    glm::vec4 getColor(glm::vec2 uv) override { 			
-    	int x = (uv.x > 0) ? int(uv.x * scale) : int(-uv.x * scale + 1);
-		int y = (uv.y > 0) ? int(uv.y * scale) : int(-uv.y * scale + 1);
-		bool cell = (x+y) & 1;
-		return cell ? glm::vec4(0, 0, 0, 1) : color;
+    // Creates a default refractive material. 
+    static Material* Refractive(glm::vec4 color = glm::vec4(1,1,1,0.1), float refractionIndex = 1.33f)
+    {
+        Material* material = new Material();
+        material->diffuseColor = color;
+        material->refractionIndex = refractionIndex; 
+        material->reflectivity = 0.5f;
+        return material;
+    }
+
+    // Creates a default checkerboard material. 
+    static Material* Checkerboard(glm::vec4 color1 = glm::vec4(1,1,1,1), glm::vec4 color2 = glm::vec4(0,0,0,1))
+    {
+        Material* material = new Material();
+        material->diffuseTexture = new CheckerboardTexture(color1, color2);        
+        return material;
     }
 };

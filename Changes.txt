@@ -13,9 +13,43 @@ These can be powerful, in the future I'll add bounds testing to them and also tr
 todo:
 [*] refraction
 [*] uv / texture mapping (planar, sphericial)
-[ ] cubes
+[*] cubes
+
+
+
+Feature list:
+[*] Cylinder primative
+[*] Refractive objects
+
+Maybe do in the future?
+
+Todo:
+
+[ ] materials system including texture sampling.
+[ ] anti aliasing
+[ ] multiple lights
+[ ] progressive rendering
 [ ] container bounds (just a sphere is fine)
 [ ] multiple lights
 [ ] local transforms (scale, rotation, translation)
 
-[ ] global illumination model.
+[ ] global illumination model (ambient occlusion)
+[ ] polygon meshes
+[ ] textured object
+[ ] normal maps
+
+[ ] make a cornel box scene
+[ ] tidy up code style
+[ ] procedual mandelbrot texture
+
+[ ] Blury reflection / refraction.
+
+If time:
+[ ] sub surface scattering :) 
+
+
+References
+
+rock from https://3dtextures.me/2016/08/01/rough-rock-015/
+png from ... ?
+perlin noise from ... ?

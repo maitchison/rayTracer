@@ -7,7 +7,6 @@
 -------------------------------------------------------------*/
 
 #include "Plane.h"
-#include <math.h>
 
 /**
 * Returns if a point p is inside the plane or not.  

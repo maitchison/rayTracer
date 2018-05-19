@@ -9,6 +9,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include "SceneObject.h"
+#include <math.h>
 
 class Plane : public SceneObject
 {

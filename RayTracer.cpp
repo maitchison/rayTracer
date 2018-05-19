@@ -44,32 +44,31 @@ ContainerObject scene;
  */
 glm::vec3 trace(Ray ray, int depth)
 {
-	glm::vec3 backgroundCol(0.1,0.0,0.5);
-	glm::vec3 light(10, 40, -3);
-	glm::vec3 ambientCol(0.2);   //Ambient color of light
+	glm::vec3 backgroundColor(0.1,0.0,0.5);
+	glm::vec3 lightPosition(10, 40, -3);
+	glm::vec3 ambientLight(0.2);   //Ambient color of light
 
     float shinyness = 4.0;
 
     RayIntersectionResult intersection = scene.intersect(ray);
 
-    if (!intersection.didCollide()) return backgroundCol;      //If there is no intersection return background colour
+    if (!intersection.didCollide()) return backgroundColor;      //If there is no intersection return background colour
 
     Material* material = intersection.target->material;
 
-    // we work out what type of material this is (3d materials could be supported in the future) and then calculate the required information.
-    // uv calculations can be a bit slow so we do them only when required not with all traces (i.e. shadow calcuations)
-    bool isMaterial2d = dynamic_cast<Material2d*>(material); 
-    glm::vec4 diffuseColor;
-    if (isMaterial2d) {
-        glm::vec2 uv = intersection.target->getUV(intersection.location);
-        diffuseColor = ((Material2d*)material)->getColor(uv);
-    } else {
-        diffuseColor = material->getColor();
+    // we check if uv co-ords need calculating as they can be quite slow (transidental functions for example).  
+    glm::vec2 uv = glm::vec2(0,0);
+    if (material->needsUV()) {        
+        uv = intersection.target->getUV(intersection.location);
+        printf("uv %f %f\n", uv.x, uv.y);
     }
+
+    // sample materials properties
+    glm::vec4 diffuseColor = material->getDiffuseColor(uv);
 
     // diffuse light
     glm::vec3 normalVector = intersection.normal;
-    glm::vec3 lightVector = glm::normalize(light - intersection.location);
+    glm::vec3 lightVector = glm::normalize(lightPosition - intersection.location);
     float diffuseLight = glm::dot(lightVector, normalVector);
     if (diffuseLight < 0) diffuseLight = 0;
 
@@ -92,8 +91,8 @@ glm::vec3 trace(Ray ray, int depth)
 
     // apply the lighting model
     // note: transpariency (alpha) only applies to the ambient and diffuse, the specular remains the same (as this is really a reflection)
-    float alpha = material->color.a;
-    glm::vec3 colorSum = (ambientCol * glm::vec3(diffuseColor) + diffuseLight * glm::vec3(diffuseColor)) * alpha + specularLight;
+    float alpha = diffuseColor.a;
+    glm::vec3 colorSum = (ambientLight * glm::vec3(diffuseColor) + diffuseLight * glm::vec3(diffuseColor)) * alpha + specularLight;
     
     // reflection    
     if(material->reflectivity > 0 && depth < MAX_STEPS) {
@@ -111,11 +110,9 @@ glm::vec3 trace(Ray ray, int depth)
             // start the ray a little further on from where we hit.
             Ray transmittedRay = Ray(intersection.location + 0.001f * ray.dir, ray.dir);
             glm::vec3 transmittedCol = trace(transmittedRay, depth); 
-            colorSum = colorSum + (1.0f-material->color.a)*transmittedCol;
+            colorSum = colorSum + (1.0f-alpha)*transmittedCol;
             
-        } else {
-
-            material->refractionIndex = 1.05f;
+        } else {            
 
             glm::vec3 refractedDir = glm::refract(ray.dir, intersection.normal, 1.0f/material->refractionIndex);
 
@@ -129,7 +126,7 @@ glm::vec3 trace(Ray ray, int depth)
                 glm::vec3 exitDir = glm::refract(refractedDir, -exitPoint.normal, material->refractionIndex);
                 Ray exitRay = Ray(exitPoint.location + exitDir * 0.001f, exitDir);
                 glm::vec3 refractedCol = trace(exitRay, depth+1); 
-                colorSum = colorSum + (1.0f-material->color.a)*refractedCol;
+                colorSum = colorSum + (1.0f-alpha)*refractedCol;
             } else {
                 // this case shouldn't happen, but might due to rounding... just ignore (i.e. use black color)
                 colorSum = glm::vec3(1,0,1);
@@ -208,11 +205,13 @@ void initialize()
 
     Cylinder* cylinder = new Cylinder(glm::vec3(0,-19,-90), 5, 10);
 
-    sphere1->material = new Material();
-    sphere2->material = new CheckerboardMaterial();
-    sphere3->material = new Material(0,0,1);
-    plane->material = new CheckerboardMaterial();
-    cylinder->material = new Material(1,0,0);
+    sphere1->material = Material::Default();
+    sphere2->material = Material::Checkerboard();
+    sphere3->material = Material::Default(glm::vec4(0,1,0,1));
+    plane->material = Material::Checkerboard();
+    cylinder->material =  Material::Default(glm::vec4(1,0,0,1));
+
+    plane->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
 
 	//--Add the above to the list of scene objects.
 	scene.add(plane); 

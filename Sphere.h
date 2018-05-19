@@ -7,7 +7,11 @@
 -------------------------------------------------------------*/
 
 #pragma once
+
 #include <glm/glm.hpp>
+#include <math.h>
+#include <stdio.h>
+
 #include "SceneObject.h"
 
 /**

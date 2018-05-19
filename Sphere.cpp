@@ -7,10 +7,6 @@
 -------------------------------------------------------------*/
 
 #include "Sphere.h"
-#include <math.h>
-#include <stdio.h>
-
-
 
 /**
 * Sphere's intersection method.  The input is a ray (pos, dir). 
