@@ -19,7 +19,7 @@ class Texture2D
 {
 public:
     Texture2D() {};
-
+    
     virtual glm::vec4 sample(float u, float v) { return glm::vec4(1,0,1,1); };
 };
 
@@ -40,7 +40,7 @@ public:
         int error = decodePNG(image, width, height, buffer.empty() ? 0 : &buffer[0], (unsigned long)buffer.size());
         if (error != 0) std::cout << "Error: " << error << std::endl;
     }
-
+    
     /** Samples texture given u and v between 0, 1. */
     glm::vec4 sample(float u, float v) override {
 
@@ -87,5 +87,5 @@ public:
 		int y = (v > 0) ? int(v * scale) : int(-v * scale + 1);
 		bool cell = (x+y) & 1;        
         return cell ? color2 : color1;
-    }
+    }    
 };

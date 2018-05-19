@@ -65,8 +65,26 @@ glm::vec3 trace(Ray ray, int depth)
     // sample materials properties
     glm::vec4 diffuseColor = material->getDiffuseColor(uv);
 
-    // diffuse light
+    // get normal vector
+    
     glm::vec3 normalVector = intersection.normal;
+
+    if (material->normalTexture) {
+        // we find the 3 vectors required to transform the normal map from object space to world space.
+        glm::vec3 materialNormal = glm::vec3(material->normalTexture->sample(uv.x, uv.y) * 2.0f - 1.0f);
+
+        // soften the normal map a little
+        materialNormal = glm::normalize(materialNormal + 2.0f * glm::vec3(0,0,1));
+
+        glm::vec3 normal = normalVector;
+        glm::vec3 tangent = intersection.target->getTangent(intersection.location);
+        glm::vec3 bitangent = glm::cross(normal, tangent);
+        normalVector = glm::vec3(
+            materialNormal.x*tangent + materialNormal.y*bitangent + materialNormal.z*normal             
+        );
+    }
+
+    // diffuse light    
     glm::vec3 lightVector = glm::normalize(lightPosition - intersection.location);
     float diffuseLight = glm::dot(lightVector, normalVector);
     if (diffuseLight < 0) diffuseLight = 0;
@@ -210,8 +228,8 @@ void initialize()
     plane->material = Material::Checkerboard();
     cylinder->material =  Material::Default(glm::vec4(1,0,0,1));
 
-    sphere1->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png");
-    //sphere1->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+    sphere1->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+    sphere1->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png");
 
 	//--Add the above to the list of scene objects.
 	scene.add(plane); 

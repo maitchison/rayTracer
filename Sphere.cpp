@@ -38,20 +38,19 @@ RayIntersectionResult Sphere::intersect(Ray ray)
     result.target = this;
     result.t = t;
     result.location = ray.pos + ray.dir * t;
-    result.normal = normal(result.location);    
+    result.normal = glm::normalize(result.location - location);    
     
     return result;
 }
 
-/**
-* Returns the unit normal vector at a given point.
-* Assumption: The input point p lies on the sphere.
-*/
-glm::vec3 Sphere::normal(glm::vec3 p)
-{
-    return glm::normalize(p - location);    
+/** 
+ * Calculates a tangent to the point p that follows the 'u' direction in terms of the uv co-rds. 
+ */ 
+glm::vec3 Sphere::getTangent(glm::vec3 p) {
+    glm::vec3 local = p - location;
+    float phi = atan2(local.z,local.x);
+    return glm::vec3(-sin(phi), 0, cos(phi));    
 }
-
 
 /**
  * Spherical UV mapping.

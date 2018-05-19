@@ -26,10 +26,13 @@ struct RayIntersectionResult
 public:
     // the location of the ray intersection.
     glm::vec3 location;    
+
     // surface normal at the point of collision.
     glm::vec3 normal;
+    
     // pointer to object we collided with.
     SceneObject* target = NULL;
+
     // distance (in units) from ray origin to collision point.  Negative for no collision.
     float t = -1;
 
@@ -46,7 +49,7 @@ public:
         this->target = target;
         this->t = t;
         this->location = location;
-        this->normal = normal;        
+        this->normal = normal;                
     }
 };
 
@@ -70,5 +73,7 @@ public:
 	virtual ~SceneObject() {}    
 
     virtual glm::vec2 getUV(glm::vec3 pos) {return glm::vec2(); };
+
+    virtual glm::vec3 getTangent(glm::vec3 p) {return glm::vec3(); };
 
 };
