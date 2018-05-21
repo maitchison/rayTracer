@@ -100,10 +100,12 @@ void update(void)
 	lastFrameTime = currentTime;
 }
 
-void initScene()
+/**
+ * A simple scene to test the raytracer 
+ */
+void initTestScene()
 {
-    scene = new ContainerObject();
-
+    
 	//-- Create a pointer to a sphere object
 	Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
     Sphere* sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -30.0), 4.0);
@@ -133,6 +135,22 @@ void initScene()
     scene->add(sphere2); 
     scene->add(sphere3); 
     scene->add(cylinder);
+}
+
+/**
+ * This is a standard cornell box (https://en.wikipedia.org/wiki/Cornell_box) with some additional objects to demonstrate
+ * the raytracers capabilities and meet assignment requirements. 
+ * */
+void initCornellScene()
+{
+
+}
+
+void initScene()
+{
+    scene = new ContainerObject();
+
+    initCornellScene();
 
     camera.scene = scene;
 }
