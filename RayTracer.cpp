@@ -109,10 +109,10 @@ void initScene()
     Sphere* sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -30.0), 4.0);
     Sphere* sphere3 = new Sphere(glm::vec3(+8.0, -8.0, -20.0), 4.0);
 
-    Plane* plane = new Plane(glm::vec3(-20, -20, -0), 
-        glm::vec3(20, -20, -0), 
-        glm::vec3(20, -20, -200), 
-        glm::vec3(-20, -20, -200) 
+    Plane* plane = new Plane(glm::vec3(-20, -20, -20), 
+        glm::vec3(20, -20, -20), 
+        glm::vec3(20, -20, -50), 
+        glm::vec3(-20, -20, -50) 
     ); 
 
     Cylinder* cylinder = new Cylinder(glm::vec3(20,-20,-90), 5, 10);
@@ -120,11 +120,11 @@ void initScene()
     sphere1->material = Material::Default();
     sphere2->material = Material::Checkerboard();
     sphere3->material = Material::Reflective(glm::vec4(0,1,0,1));
-    plane->material = Material::Checkerboard();
+    plane->material = Material::Default(); plane->material->diffuseTexture = new MandelbrotTexture();
     cylinder->material =  Material::Default(glm::vec4(1,0,0,1));
 
     sphere1->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
-    sphere1->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png");
+    sphere1->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);
 
 	//--Add the above to the list of scene objects.
 	scene->add(plane); 

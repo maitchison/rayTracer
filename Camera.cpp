@@ -33,7 +33,7 @@ Color Camera::trace(Ray ray, int depth)
 
     if (material->normalTexture) {
         // we find the 3 vectors required to transform the normal map from object space to world space.
-        glm::vec3 materialNormal = glm::vec3(material->normalTexture->sample(uv.x, uv.y) * 2.0f - 1.0f);
+        glm::vec3 materialNormal = glm::vec3(material->normalTexture->sampleNormalMap(uv) * 2.0f - 1.0f);
 
         // soften the normal map a little
         materialNormal = glm::normalize(materialNormal + 2.0f * glm::vec3(0,0,1));

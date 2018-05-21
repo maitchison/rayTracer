@@ -44,7 +44,7 @@ public:
     /** Gets diffuse color of material at given uv co-ord */
     glm::vec4 getDiffuseColor(glm::vec2 uv = glm::vec2(0,0)) {
         if (diffuseTexture) {
-            return diffuseColor * diffuseTexture->sample(uv.x, uv.y);
+            return diffuseColor * diffuseTexture->sample(uv);
         } else {
             return diffuseColor;
         }
