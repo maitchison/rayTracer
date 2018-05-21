@@ -6,6 +6,7 @@ Camera::Camera(glm::vec3 location) : SceneObject(location)
 
 Color Camera::trace(Ray ray, int depth)
 {
+    // todo: proper lighting system.
 	glm::vec3 lightPosition(10, 40, -3);
 
 	Color ambientLight = Color(0.2f,0.2f,0.2f, 1.0f);   //Ambient color of light
@@ -125,6 +126,12 @@ int Camera::render(int pixels, int oversample, float defocus, bool autoReset)
 	
 	int pixelsDone = 0;
 
+    // camera rotation matrix
+    glm::mat4x4 rotationMatrix = glm::mat4x4();
+    rotationMatrix = glm::rotate(rotationMatrix, rotation.x, glm::vec3(1,0,0));
+    rotationMatrix = glm::rotate(rotationMatrix, rotation.y, glm::vec3(0,1,0));
+    rotationMatrix = glm::rotate(rotationMatrix, rotation.z, glm::vec3(0,0,1));
+    
 	#pragma loop(hint_parallel(4))  
 	for (int i = 0; i < pixels; i++) {
 
@@ -153,6 +160,9 @@ int Camera::render(int pixels, int oversample, float defocus, bool autoReset)
 			float rx = (2 * ((x + jitterx) / SCREEN_WIDTH) - 1) * tan(fov / 2 * M_PI / 180) * aspectRatio;
 			float ry = (1 - 2 * ((y + jittery) / SCREEN_HEIGHT)) * tan(fov / 2 * M_PI / 180);
 			glm::vec3 dir = glm::normalize(glm::vec3(rx, -ry, -1));
+
+            // apply camera tranform
+            dir = glm::vec3(glm::vec4(dir.x, dir.y, dir.z, 1.0) * rotationMatrix);
 
             // defocus
             if (defocus) {

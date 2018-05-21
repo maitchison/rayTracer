@@ -59,6 +59,24 @@ int render_mode = RM_LQ;
 
 // --------------------------------
 
+/** Forces camera redraw. */
+void redraw()
+{
+    render_mode = RM_LQ;
+    camera.pixelOn = 0;
+}
+
+void keyboard(unsigned char key, int x, int y)
+{
+    switch (key) {
+        case 'w': camera.move(0,-5); redraw(); break;
+        case 's': camera.move(0,+5); redraw();break;
+        case 'a': camera.move(-5,0); redraw(); break;
+        case 'd': camera.move(5,0); redraw(); break;
+        case 'q': camera.rotate(-0.1f,0); redraw(); break;
+        case 'e': camera.rotate(0.1f,0); redraw(); break;
+    }
+}
 
 void update(void)
 {    
@@ -157,8 +175,8 @@ void initCornellScene()
     backPlane->material = forePlane->material = floorPlane->material = ceilingPlane->material = Material::Default(Color(0.9,0.9,0.9,1.0));
 
     // reflective blury sphere
-    Sphere* sphere = new Sphere(glm::vec3(0,-20,-80), 20.0f);
-    sphere->material = Material::Reflective(glm::vec4(0.1f,0.1f,0.1f,1.0f), 1.0f);
+    Sphere* sphere = new Sphere(glm::vec3(0,-20,-70), 10.0f);
+    sphere->material = Material::Reflective(glm::vec4(0.1f,0.1f,0.1f,1.0f), 0.8f);
 
     // a framed mandelbrot picture in the background
 
@@ -256,6 +274,7 @@ int main(int argc, char *argv[]) {
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("RayTracer");
 	initialize();
+    glutKeyboardFunc(keyboard);
 	glutDisplayFunc(display);
 	glutIdleFunc(update);
 	glutMainLoop();

@@ -38,5 +38,17 @@ struct Camera : SceneObject
 	 @param autoReset: causes renderer to render next frame once this frame finishes rendering.
 	*/
 	int render(int pixels, int oversample=1, float defocus = 0.0f, bool autoReset=false);	
+
+    /** moves camera */
+    void move(float dx, float dy) {
+        location.x += dx;
+        location.z += dy;
+    }
+
+    /** rotates camera */
+    void rotate(float dx, float dy) {
+        rotation.y += dx;
+        rotation.x += dy;
+    }
 	
 };
