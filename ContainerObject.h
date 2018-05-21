@@ -28,7 +28,15 @@ public:
     void add(SceneObject* object);
 
     /** Intersects ray with object. */
-	RayIntersectionResult intersect(Ray ray) override;
-	
+	RayIntersectionResult intersect(Ray ray) override; 
+
+    /** Sets material for all child objects. */
+    void setMaterial(Material* material)
+    {
+        this->material = material;
+        for (int i = 0; i < children.size(); i++) {
+            children[i]->material = material;
+        }
+    }
     
 };

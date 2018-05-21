@@ -27,8 +27,7 @@ Color Camera::trace(Ray ray, int depth)
     // sample materials properties
     glm::vec4 diffuseColor = material->getDiffuseColor(uv);
 
-    // get normal vector
-    
+    // get normal vector    
     glm::vec3 normalVector = intersection.normal;
 
     if (material->normalTexture) {
@@ -36,7 +35,7 @@ Color Camera::trace(Ray ray, int depth)
         glm::vec3 materialNormal = glm::vec3(material->normalTexture->sampleNormalMap(uv) * 2.0f - 1.0f);
 
         // soften the normal map a little
-        materialNormal = glm::normalize(materialNormal + 2.0f * glm::vec3(0,0,1));
+        materialNormal = glm::normalize(materialNormal + 1.0f * glm::vec3(0,0,1));
 
         glm::vec3 normal = normalVector;
         glm::vec3 tangent = intersection.target->getTangent(intersection.location);
@@ -76,23 +75,21 @@ Color Camera::trace(Ray ray, int depth)
     // reflection    
     if(material->reflectivity > 0 && depth < MAX_STEPS) {
         glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVector);
-        Ray reflectedRay(intersection.location, reflectedDir);
+        Ray reflectedRay(intersection.location + reflectedDir * EPSILON, reflectedDir);
         Color reflectedCol = trace(reflectedRay, depth+1); 
-        colorSum = colorSum + (0.8f*reflectedCol);
+        colorSum = colorSum + (material->reflectivity*reflectedCol);        
     }
 
     // transparency 
     // note: we don't bump up the depth counter here as we can't recurse infinitely with transparency.
-    if (alpha < 1) {
+    if (alpha < 1) {        
         if (material->refractionIndex == 1.0) {        
-    
             // start the ray a little further on from where we hit.
             Ray transmittedRay = Ray(intersection.location + 0.001f * ray.dir, ray.dir);
             Color transmittedCol = trace(transmittedRay, depth); 
             colorSum = colorSum + (1.0f-alpha)*transmittedCol;
             
         } else {            
-
             glm::vec3 refractedDir = glm::refract(ray.dir, intersection.normal, 1.0f/material->refractionIndex);
 
             Ray refractedRay = Ray(intersection.location + refractedDir * 0.001f , refractedDir);

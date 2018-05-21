@@ -138,14 +138,7 @@ public:
 
         float cx = (u-0.75f)*3.0f;
         float cy = (v-0.5f)*2.0f;
-
-        if (u < 0.01 || u > 0.99) {
-            return glm::vec4(1,1,1,1);
-        }
-        if (v < 0.01 || v > 0.99) {
-            return glm::vec4(1,1,1,1);
-        }
-
+        
         float x = 0;
         float y = 0;
 

@@ -43,7 +43,7 @@ public:
 	};
 
     /** Creates a plane as defined by a point a normal, and an 'up' direction. */
-    Plane(glm::vec3 v1, glm::vec3 normal, glm::vec3 up) : SceneObject()
+    Plane(glm::vec3 v1, glm::vec3 normal, glm::vec3 up = glm::vec3(0,1,0)) : SceneObject()
 	{
         this->v1 = v1;
         this->normal = glm::normalize(normal);

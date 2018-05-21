@@ -19,17 +19,21 @@ public:
     }
 
     /** Creates a unit cube */
-    static Polyhedron* Cube(glm::vec3 pos) {
+    static Polyhedron* Cube(glm::vec3 pos, glm::vec3 scale = glm::vec3(1,1,1)) {
 
-        glm::vec3 v1 = glm::vec3(-0.5,-0.5,-0.5) + pos;
-        glm::vec3 v2 = glm::vec3(+0.5,-0.5,-0.5) + pos;
-        glm::vec3 v3 = glm::vec3(+0.5,+0.5,-0.5) + pos;
-        glm::vec3 v4 = glm::vec3(-0.5,+0.5,-0.5) + pos;
+        float w = scale.x/2.0f;
+        float h = scale.y/2.0f;
+        float d = scale.z/2.0f;
 
-        glm::vec3 v5 = glm::vec3(-0.5,-0.5,+0.5) + pos;
-        glm::vec3 v6 = glm::vec3(+0.5,-0.5,+0.5) + pos;
-        glm::vec3 v7 = glm::vec3(+0.5,+0.5,+0.5) + pos;
-        glm::vec3 v8 = glm::vec3(-0.5,+0.5,+0.5) + pos;
+        glm::vec3 v1 = glm::vec3(-w,-h,-d) + pos;
+        glm::vec3 v2 = glm::vec3(+w,-h,-d) + pos;
+        glm::vec3 v3 = glm::vec3(+w,+h,-d) + pos;
+        glm::vec3 v4 = glm::vec3(-w,+h,-d) + pos;
+
+        glm::vec3 v5 = glm::vec3(-w,-h,+d) + pos;
+        glm::vec3 v6 = glm::vec3(+w,-h,+d) + pos;
+        glm::vec3 v7 = glm::vec3(+w,+h,+d) + pos;
+        glm::vec3 v8 = glm::vec3(-w,+h,+d) + pos;
 
         Polyhedron* cube = new Polyhedron();
 

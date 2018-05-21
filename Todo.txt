@@ -30,15 +30,14 @@ Maybe do in the future?
 
 Todo:
 
-
-
-[ ] material lighting properies (shininess, etc)
+[ ] cornel box
+[ ] camera moves with keys
 [ ] multiple lights
-[ ] camera movement / rotation
+[ ] fix up lighting materials
 
 [ ] local transforms (scale, rotation, translation)
 
-[ ] container bounds (just a sphere is fine)
+[ ] container bounds (just a sphere is fine, this will help optimize boxes for example)
 
 [ ] global illumination model (ambient occlusion)
 [ ] polygon meshes
@@ -58,5 +57,7 @@ If time:
 References
 
 rock from https://3dtextures.me/2016/08/01/rough-rock-015/
+wood from https://meocloud.pt/link/01816bc8-a534-458e-b4e3-e94fe8c2ee6d/Wood_plank_007_SD/
+
 png from ... ?
 perlin noise from ... ?

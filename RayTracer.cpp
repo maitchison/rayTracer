@@ -61,7 +61,7 @@ int render_mode = RM_LQ;
 
 
 void update(void)
-{
+{    
     currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;	
 	float elapsed = currentTime - lastFrameTime;
 
@@ -143,7 +143,90 @@ void initTestScene()
  * */
 void initCornellScene()
 {
+    // infinite planes are a little faster than clipped planes and won't have potential artifacts at the edges.
+    Plane* leftPlane = new Plane(glm::vec3(-40,0,0), glm::vec3(1,0,0));
+    Plane* rightPlane = new Plane(glm::vec3(+40,0,0), glm::vec3(-1,0,0));
+    Plane* backPlane = new Plane(glm::vec3(0,0,-80), glm::vec3(0,0,1));
+    Plane* forePlane = new Plane(glm::vec3(0,0,20), glm::vec3(0,0,-1));
+    Plane* floorPlane = new Plane(glm::vec3(0,40,0), glm::vec3(0,-1,0));
+    Plane* ceilingPlane = new Plane(glm::vec3(0,-40,0), glm::vec3(0,1,0));
 
+    // make the colors a little pastal.
+    leftPlane->material = Material::Default(Color(0.9,0.1,0.1,1.0));
+    rightPlane->material = Material::Default(Color(0.1,0.9,0.1,1.0));
+    backPlane->material = forePlane->material = floorPlane->material = ceilingPlane->material = Material::Default(Color(0.9,0.9,0.9,1.0));
+
+    // reflective blury sphere
+    Sphere* sphere = new Sphere(glm::vec3(0,-20,-80), 20.0f);
+    sphere->material = Material::Reflective(glm::vec4(0.1f,0.1f,0.1f,1.0f), 1.0f);
+
+    // a framed mandelbrot picture in the background
+
+    Polyhedron* pictureFrame = Polyhedron::Cube(glm::vec3(0,0,-80), glm::vec3(50,50,10));    
+    Polyhedron* picture = Polyhedron::Cube(glm::vec3(0,0,-79), glm::vec3(45,45,10));
+
+    Material* woodMaterial = new Material();
+    woodMaterial->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
+    woodMaterial->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);
+    pictureFrame->setMaterial(woodMaterial);
+    
+    Material* pictureMaterial = new Material();
+    pictureMaterial->diffuseTexture = new MandelbrotTexture();
+    // todo: might be nice to add some ruff normal texture (such as canvas) to this.    
+    picture->setMaterial(pictureMaterial);
+
+    // create pedestals with object ontop.
+    glm::vec3 pos;
+    Polyhedron* petastool;
+    SceneObject* object;
+    
+    // note this would work better with grouped objects and object transforms... 
+
+    // 1> refractive:
+    pos = glm::vec3(-30,-40,-50);
+    petastool = Polyhedron::Cube(pos, glm::vec3(10,10,10));
+    object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
+    object->material = Material::Refractive(Color(0.5,0.1,0.1,0.1));
+    scene->add(petastool);
+    scene->add(object);
+    
+    // 2> transparient:
+    pos = glm::vec3(-10,-40,-50);
+    petastool = Polyhedron::Cube(pos, glm::vec3(10,10,10));
+    object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
+    object->material = Material::Default(Color(0.1,0.5,0.1,0.1));
+    scene->add(petastool);
+    scene->add(object);
+
+    // 3> textured:
+    pos = glm::vec3(+10,-40,-50);
+    petastool = Polyhedron::Cube(pos, glm::vec3(10,10,10));
+    object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
+    object->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+    object->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);
+    scene->add(petastool);
+    scene->add(object);    
+
+    // 4> standard:
+    pos = glm::vec3(+30,-40,-50);
+    petastool = Polyhedron::Cube(pos, glm::vec3(10,10,10));
+    object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
+    object->material = Material::Default(Color(0.1f,0.1f,0.6f,1.0f));
+    scene->add(petastool);
+    scene->add(object);
+    
+    
+    scene->add(leftPlane);
+    scene->add(rightPlane);
+    scene->add(backPlane);
+    scene->add(floorPlane);
+    scene->add(ceilingPlane);
+    scene->add(forePlane);
+
+    scene->add(pictureFrame);
+    scene->add(picture);
+
+    scene->add(sphere);
 }
 
 void initScene()
