@@ -25,13 +25,13 @@ Feature list:
 [*] implment new camera class
 [*] progressive render with 2 passses
 [*] anti aliasing
+[*] mandelbrot procedual texture.
+[*] cornell box scene 
+[*] basic camera movement
 
 Maybe do in the future?
 
 Todo:
-
-[ ] cornel box
-[ ] camera moves with keys
 [ ] multiple lights
 [ ] fix up lighting materials
 
@@ -41,12 +41,7 @@ Todo:
 
 [ ] global illumination model (ambient occlusion)
 [ ] polygon meshes
-[ ] textured object
-[ ] normal maps
-
-[ ] make a cornel box scene
 [ ] tidy up code style
-[ ] procedual mandelbrot texture
 
 [ ] Blury reflection / refraction.
 
