@@ -64,9 +64,10 @@ public:
     /** moves camera.
      * forward: amount to move forwards / backwards
      * strafe: amount to strafe left / right. */
-    void move(float forward, float strafe = 0.0f) {        
+    void move(float forward, float strafe = 0.0f, float up = 0.0f) {        
         location += glm::vec3(toLocal(glm::vec4(0,0,-1,0))) * forward;
-        location += glm::vec3(toLocal(glm::vec4(+1,0,0,0))) * strafe;        
+        location += glm::vec3(toLocal(glm::vec4(1,0,0,0))) * strafe;        
+        location += glm::vec3(toLocal(glm::vec4(0,1,0,0))) * up; 
     }
 
     /** rotates camera */

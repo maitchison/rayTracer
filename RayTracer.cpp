@@ -75,6 +75,8 @@ void keyboard(unsigned char key, int x, int y)
         case 's': camera.move(-5,0); break;
         case 'a': camera.move(0, -5); break;
         case 'd': camera.move(0, +5); break;
+        case 'c': camera.move(0, 0, +5); break;
+        case 'z': camera.move(0, 0, -5); break;
         case 'q': camera.rotate(-0.1f,0); break;
         case 'e': camera.rotate(0.1f,0); break;
         default:
@@ -131,13 +133,9 @@ void initTestScene()
 {
 
     // lights
-    scene->add(new Light(glm::vec3(0,30,0)));
-
-    // visualise light
-    Sphere* lightOrb = new Sphere(glm::vec3(0,30,0),1.0f);
-    lightOrb->material = Material::Emissive();
-    lightOrb->castsShadows = false;
-    scene->add(lightOrb);
+    scene->add(new Light(glm::vec3(-10,30,0), Color(1,0.2,0.2,1)));
+    // lights
+    scene->add(new Light(glm::vec3(+10,30,0), Color(0.2,1,0.2,1)));
     
 	//-- Create a pointer to a sphere object
 	Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
@@ -146,9 +144,9 @@ void initTestScene()
 
     Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
 
-    sphere1->material = Material::Default();
+    sphere1->material = Material::Default(Color(1,1,1,0.1));
     sphere2->material = Material::Checkerboard();
-    sphere3->material = Material::Reflective(glm::vec4(0,1,0,1));
+    sphere3->material = Material::Reflective(Color(0,1,0,1));
     //plane->material = Material::Checkerboard(1.0f);
     
 	//--Add the above to the list of scene objects.

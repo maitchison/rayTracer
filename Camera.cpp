@@ -10,8 +10,7 @@ void Camera::calculateLighting(RayIntersectionResult intersection, const Light* 
     Material* material = intersection.target->material;
 
     // diffuse light    
-    glm::vec3 lightVector = glm::normalize(light->location - intersection.location);
-    float lightDistance = glm::length(light->location - intersection.location);
+    glm::vec3 lightVector = glm::normalize(light->location - intersection.location);    
     float diffuseLight = glm::dot(lightVector, intersection.normal);
     if (diffuseLight < 0) diffuseLight = 0;
 
@@ -29,13 +28,41 @@ void Camera::calculateLighting(RayIntersectionResult intersection, const Light* 
     // shadow
     if (light->shadow) 
     {
-        // offsetting the shadow trace a little stops self shadowing artifacts
-        Ray shadow(intersection.location + lightVector * 0.001f, lightVector);
-        shadow.shadowTrace=true; // this will ignore objects that do not cast shadows.
-        RayIntersectionResult shadowIntersection = scene->intersect(shadow);    
-        if (shadowIntersection.didCollide() && shadowIntersection.t < lightDistance) {
-            diffuseLight = specularLight = 0;              
-        }    
+        float lightDistance;
+        glm::vec3 shadowTestPoint = intersection.location;
+
+        // handle transparient shadows by letting ray continue when meeting a transparient object
+        for (int i = 0; i < 9; i++) {
+
+            // this is an optimization.  Points on the far side of a sphere, for example, will have no lighting
+            // so there is no need to do shadow calculations.  
+            if (diffuseLight < EPSILON && specularLight < EPSILON) {
+                break;
+            }
+            
+            // offsetting the shadow trace a little stops self shadowing artifacts
+            Ray shadow(shadowTestPoint + lightVector * 0.01f, lightVector);
+            shadow.shadowTrace=true; // this will ignore objects that do not cast shadows.
+
+            RayIntersectionResult shadowIntersection = scene->intersect(shadow);    
+            lightDistance = glm::length(light->location - shadowTestPoint);
+
+            if (shadowIntersection.didCollide() && shadowIntersection.t < lightDistance) {
+                // we sample the uv, so that textured transpariency will work :)
+                glm::vec2 uv = glm::vec2(0,0);
+                if (material->needsUV()) {        
+                    uv = intersection.target->getUV(intersection.location);        
+                }
+                float transmission = 1.0f - shadowIntersection.target->material->getDiffuseColor(uv).a;
+                diffuseLight *= transmission;       
+                specularLight *= transmission;       
+                // no need to continue if we hit a solid object.
+                if (transmission < EPSILON) break;
+                shadowTestPoint = shadowIntersection.location;                
+            }    
+
+        }
+
     }
 
     // add light to summation.

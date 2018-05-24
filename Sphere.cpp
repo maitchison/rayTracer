@@ -19,7 +19,7 @@ RayIntersectionResult Sphere::intersect(Ray ray)
     float c = len2 - radius*radius;
     float delta = b*b - c;
    
-	if (delta < 0.0001f) return RayIntersectionResult();
+	if (delta < EPSILON) return RayIntersectionResult();
 
     float t1 = -b - sqrt(delta);
     float t2 = -b + sqrt(delta);
