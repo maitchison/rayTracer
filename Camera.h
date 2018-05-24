@@ -41,10 +41,10 @@ public:
 	/** Render this number of pixels.  Rendering can be done bit by bit.  
 	 @param pixels: maximum number of pixels to render.  -1 renders entire image.
 	 @param oversample: number of rays to trace per pixel.  1 for standard render.
-	 @param defocus: randomly defocus rays by this number of radians.  Requires high oversampling for best results.
+	 @param defocusBlur: randomly defocus rays by this number of radians.  Requires high oversampling for best results.
 	 @param autoReset: causes renderer to render next frame once this frame finishes rendering.
 	*/
-	int render(int pixels, int oversample=1, float defocus = 0.0f, bool autoReset=false);	
+	int render(int pixels, int oversample=1, float defocusBlur = 0.0f, bool autoReset=false);	
 
     /** Reset the camerea rendering. */
     void reset()

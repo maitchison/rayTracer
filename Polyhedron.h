@@ -37,12 +37,13 @@ public:
 
         Polyhedron* cube = new Polyhedron();
 
-        cube->add(new Plane(v1,v2,v3,v4));
-        cube->add(new Plane(v5,v6,v7,v8));
-        cube->add(new Plane(v4,v3,v7,v8));
-        cube->add(new Plane(v2,v1,v5,v6));
-        cube->add(new Plane(v3,v2,v6,v7));
-        cube->add(new Plane(v8,v3,v1,v4));
+        cube->add(new Plane(v1,v2,v3,v4)); // front
+        cube->add(new Plane(v5,v6,v7,v8)); // back
+        cube->add(new Plane(v4,v3,v7,v8)); // top
+        cube->add(new Plane(v2,v1,v5,v6)); // bottom        
+        cube->add(new Plane(v3,v2,v6,v7)); // left
+        cube->add(new Plane(v1,v4,v8,v5)); // right
+        
 
         return cube;
     }

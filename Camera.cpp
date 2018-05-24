@@ -11,35 +11,37 @@ void Camera::calculateLighting(RayIntersectionResult intersection, const Light* 
 
     // diffuse light    
     glm::vec3 lightVector = glm::normalize(light->location - intersection.location);    
-    float diffuseLight = glm::dot(lightVector, intersection.normal);
-    if (diffuseLight < 0) diffuseLight = 0;
-
+    float diffusePower = glm::dot(lightVector, intersection.normal);
+    if (diffusePower < 0) diffusePower = 0;
+    
     // specular light
     glm::vec3 reflVector = glm::reflect(-lightVector, intersection.normal);
     glm::vec3 viewVector = glm::normalize(this->location - intersection.location);
 
-    float specularLight = glm::dot(reflVector, viewVector);
-    if (specularLight < 0) {
-        specularLight = 0;
+    float specularPower = glm::dot(reflVector, viewVector);
+    if (specularPower < 0) {
+        specularPower = 0;
     } else {
-        specularLight = (float)pow(specularLight, material->shininess);
+        specularPower = (float)pow(specularPower, material->shininess);
     }
+
+    Color diffuseLight = light->color * diffusePower;
+    Color specularLight = light->color * specularPower;
     
+    // this is an optimization.  Points on the far side of a sphere, for example, will have no lighting
+    // so there is no need to do shadow calculations.  
+    bool needsShadow = light->shadow && (diffusePower > EPSILON || specularPower > EPSILON);
+            
     // shadow
-    if (light->shadow) 
+    // note: i'm 90% sure I should be doing the transpariency checks in the other order, i.e. absorb from objects closest 
+    // to the light first.  Hovever this will often not be noticiable (I think... ?)
+    if (needsShadow) 
     {
         float lightDistance;
         glm::vec3 shadowTestPoint = intersection.location;
 
         // handle transparient shadows by letting ray continue when meeting a transparient object
-        for (int i = 0; i < 9; i++) {
-
-            // this is an optimization.  Points on the far side of a sphere, for example, will have no lighting
-            // so there is no need to do shadow calculations.  
-            if (diffuseLight < EPSILON && specularLight < EPSILON) {
-                break;
-            }
-            
+        for (int i = 0; i < 9; i++) {            
             // offsetting the shadow trace a little stops self shadowing artifacts
             Ray shadow(shadowTestPoint + lightVector * 0.01f, lightVector);
             shadow.shadowTrace=true; // this will ignore objects that do not cast shadows.
@@ -53,19 +55,23 @@ void Camera::calculateLighting(RayIntersectionResult intersection, const Light* 
                 if (material->needsUV()) {        
                     uv = intersection.target->getUV(intersection.location);        
                 }
-                float transmission = 1.0f - shadowIntersection.target->material->getDiffuseColor(uv).a;
-                diffuseLight *= transmission;       
-                specularLight *= transmission;       
+                Color occluderColor = shadowIntersection.target->material->getDiffuseColor(uv);
+                float transmission = 1.0f - occluderColor.a;
+                diffuseLight *= (transmission * occluderColor);
+                specularLight *= (transmission * occluderColor);
                 // no need to continue if we hit a solid object.
                 if (transmission < EPSILON) break;
                 shadowTestPoint = shadowIntersection.location;                
-            }    
+            } else {
+                // didn't hit anything so stop.
+                break;
+            }
+
 
         }
-
     }
 
-    // add light to summation.
+    // accumulate light.
     ambientLightSum += light->ambientLight * light->color;
     diffuseLightSum += diffuseLight * light->color;
     specularLightSum += specularLight * light->color;
@@ -120,6 +126,12 @@ Color Camera::trace(Ray ray, int depth)
     // reflection    
     if(material->reflectivity > 0 && depth < MAX_STEPS) {
         glm::vec3 reflectedDir = glm::reflect(ray.dir, intersection.normal);
+        
+        // add bluring
+        if (material->reflectionBlur > EPSILON) {            
+            reflectedDir = defocus(reflectedDir, material->reflectionBlur);
+        }
+
         Ray reflectedRay(intersection.location + reflectedDir * EPSILON, reflectedDir);
         Color reflectedCol = trace(reflectedRay, depth+1); 
         color += (material->reflectivity*reflectedCol);        
@@ -165,7 +177,7 @@ Color Camera::trace(Ray ray, int depth)
 }
 
 /** Renders given number of pixels before returning control. */
-int Camera::render(int pixels, int oversample, float defocus, bool autoReset)
+int Camera::render(int pixels, int oversample, float defocusBlur, bool autoReset)
 {	
 	int totalPixels = SCREEN_WIDTH * SCREEN_HEIGHT;
 	float aspectRatio = float(SCREEN_WIDTH / SCREEN_HEIGHT);
@@ -177,10 +189,7 @@ int Camera::render(int pixels, int oversample, float defocus, bool autoReset)
 	int pixelsDone = 0;
 
     // camera rotation matrix
-    glm::mat4x4 rotationMatrix = glm::mat4x4();
-    rotationMatrix = glm::rotate(rotationMatrix, rotation.x, glm::vec3(1,0,0));
-    rotationMatrix = glm::rotate(rotationMatrix, rotation.y, glm::vec3(0,1,0));
-    rotationMatrix = glm::rotate(rotationMatrix, rotation.z, glm::vec3(0,0,1));
+    glm::mat4x4 rotationMatrix = EuclideanRotationMatrix(rotation);
     
 	#pragma loop(hint_parallel(4))  
 	for (int i = 0; i < pixels; i++) {
@@ -215,10 +224,8 @@ int Camera::render(int pixels, int oversample, float defocus, bool autoReset)
             dir = glm::vec3(glm::vec4(dir.x, dir.y, dir.z, 0.0) * rotationMatrix);
 
             // defocus
-            if (defocus) {
-                dir.x += randf() * defocus;
-                dir.y += randf() * defocus;
-                dir = glm::normalize(dir);
+            if (defocusBlur > EPSILON) {
+                dir = defocus(dir, defocusBlur);
             }
 			
 			Ray ray = Ray(location, dir);

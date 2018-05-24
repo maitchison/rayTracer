@@ -30,23 +30,21 @@ Feature list:
 [*] basic camera movement
 [*] multiple lights
 [*] transparient shadows
+[*] blury reflections 
+[*] camera defocus
 
 Maybe do in the future?
 
 Todo:
 
-
-
-[ ] object transforms (useful for camera)
-[ ] camera defocus
-[ ] shortcut keys for effects
-[ ] fix up lighting materials
+[ ] global illumination model (ambient occlusion)
 
 [ ] local transforms (scale, rotation, translation)
 
+[ ] shortcut keys for effects
+
 [ ] container bounds (just a sphere is fine, this will help optimize boxes for example)
 
-[ ] global illumination model (ambient occlusion)
 [ ] polygon meshes
 [ ] tidy up code style
 
@@ -64,8 +62,10 @@ If time:
 Bugs:
 [fixed] shadows look wrong          <- yes, fixed, was only checking up to 1 unit away...
 [fixed] checkerboard on inf plane   <- fixed with scaling of texture
-[..] lighting on inf plane.         <- specular light was totally wrong!
-[..] test multiple lights
+[fixed] lighting on inf plane.      <- specular light was totally wrong on everything!
+[done] test multiple lights
+[..] still getting shadow specs :(
+[..] colored shadows not working
 
 box is missing a face
 

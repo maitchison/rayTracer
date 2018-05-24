@@ -75,8 +75,8 @@ void keyboard(unsigned char key, int x, int y)
         case 's': camera.move(-5,0); break;
         case 'a': camera.move(0, -5); break;
         case 'd': camera.move(0, +5); break;
-        case 'c': camera.move(0, 0, +5); break;
-        case 'z': camera.move(0, 0, -5); break;
+        case 'z': camera.move(0, 0, +5); break;
+        case 'c': camera.move(0, 0, -5); break;
         case 'q': camera.rotate(-0.1f,0); break;
         case 'e': camera.rotate(0.1f,0); break;
         default:
@@ -147,7 +147,8 @@ void initTestScene()
     sphere1->material = Material::Default(Color(1,1,1,0.1));
     sphere2->material = Material::Checkerboard();
     sphere3->material = Material::Reflective(Color(0,1,0,1));
-    //plane->material = Material::Checkerboard(1.0f);
+    sphere3->material->reflectionBlur = 0.3f;
+    plane->material = Material::Checkerboard(1.0f);
     
 	//--Add the above to the list of scene objects.
 	scene->add(plane); 
@@ -240,6 +241,7 @@ void initCornellScene()
     scene->add(petastool);
     scene->add(object);
     
+    scene->add(Polyhedron::Cube(glm::vec3(10,0,-30),glm::vec3(5,5,5)));
     
     scene->add(leftPlane);
     scene->add(rightPlane);
@@ -258,7 +260,7 @@ void initScene()
 {
     scene = new Scene();
 
-    initTestScene();
+    initCornellScene();
 
     camera.scene = scene;
 }

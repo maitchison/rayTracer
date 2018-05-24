@@ -26,6 +26,7 @@ public:
     
     // refraction / reflection properties
     float reflectivity = 0.0f;              // how much the material is reflective 1=pefect mirror.
+    float reflectionBlur = 0.0f;            // how blured the reflection should be (in radians), requires super sampling to look good.
     float refractionIndex = 1.0f;           // refractive index of object.  Must set material diffuse alpha to see this.    
     float shininess = 25.0f;                // how shiny the object is 
     
