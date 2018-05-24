@@ -17,21 +17,24 @@ void Camera::calculateLighting(RayIntersectionResult intersection, const Light* 
 
     // specular light
     glm::vec3 reflVector = glm::reflect(-lightVector, intersection.normal);
-    glm::vec3 viewVector = glm::normalize(glm::vec3(intersection.location.x, intersection.location.y, -intersection.location.z));
+    glm::vec3 viewVector = glm::normalize(this->location - intersection.location);
+
     float specularLight = glm::dot(reflVector, viewVector);
     if (specularLight < 0) {
         specularLight = 0;
     } else {
         specularLight = (float)pow(specularLight, material->shininess);
     }
-
+    
     // shadow
     if (light->shadow) 
     {
-        Ray shadow(intersection.location + lightVector * EPSILON, lightVector);
+        // offsetting the shadow trace a little stops self shadowing artifacts
+        Ray shadow(intersection.location + lightVector * 0.001f, lightVector);
+        shadow.shadowTrace=true; // this will ignore objects that do not cast shadows.
         RayIntersectionResult shadowIntersection = scene->intersect(shadow);    
         if (shadowIntersection.didCollide() && shadowIntersection.t < lightDistance) {
-            diffuseLight = specularLight = 0;            
+            diffuseLight = specularLight = 0;              
         }    
     }
 
@@ -85,7 +88,7 @@ Color Camera::trace(Ray ray, int depth)
 
     // combine lighting
     Color materialColor = material->getDiffuseColor(uv);
-    Color color = (ambientLight + diffuseLight) * materialColor + specularLight;
+    Color color = (ambientLight + diffuseLight) * materialColor + specularLight + material->emisiveColor;
     
     // reflection    
     if(material->reflectivity > 0 && depth < MAX_STEPS) {

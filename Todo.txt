@@ -28,14 +28,15 @@ Feature list:
 [*] mandelbrot procedual texture.
 [*] cornell box scene 
 [*] basic camera movement
+[*] multiple lights
 
 Maybe do in the future?
 
 Todo:
-[ ] multiple lights
+
+[ ] transparient shadows
 
 [ ] object transforms (useful for camera)
-[ ] transparient shadows
 [ ] camera defocus
 [ ] shortcut keys for effects
 [ ] fix up lighting materials
@@ -60,10 +61,13 @@ If time:
 
 
 Bugs:
-shadows look wrong
+[fixed] shadows look wrong          <- yes, fixed, was only checking up to 1 unit away...
+[fixed] checkerboard on inf plane   <- fixed with scaling of texture
+[..] lighting on inf plane.         <- specular light was totally wrong!
+[..] text multiple lights
+
 box is missing a face
-checkerboard on inf plane
-lighting on inf plane.
+
 
 Scenes:
 cornell

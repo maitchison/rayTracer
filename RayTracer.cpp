@@ -133,24 +133,32 @@ void initTestScene()
     // lights
     scene->add(new Light(glm::vec3(0,30,0)));
 
+    // visualise light
+    Sphere* lightOrb = new Sphere(glm::vec3(0,30,0),1.0f);
+    lightOrb->material = Material::Emissive();
+    lightOrb->castsShadows = false;
+    scene->add(lightOrb);
     
 	//-- Create a pointer to a sphere object
 	Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
     Sphere* sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -30.0), 4.0);
     Sphere* sphere3 = new Sphere(glm::vec3(+8.0, -8.0, -20.0), 4.0);
 
-    Plane* plane = new Plane(glm::vec3(0, -10, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+    Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
 
     sphere1->material = Material::Default();
     sphere2->material = Material::Checkerboard();
     sphere3->material = Material::Reflective(glm::vec4(0,1,0,1));
-    plane->material = Material::Checkerboard(1.0f);
+    //plane->material = Material::Checkerboard(1.0f);
     
 	//--Add the above to the list of scene objects.
 	scene->add(plane); 
     scene->add(sphere1);     
     scene->add(sphere2); 
     scene->add(sphere3);     
+
+    // origin marker
+    scene->add(new Sphere(glm::vec3(0,-20,0),3.0f));
 }
 
 /**

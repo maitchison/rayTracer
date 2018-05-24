@@ -12,6 +12,9 @@ class Ray
 public:
     glm::vec3 pos;	//The source point of the ray
 	glm::vec3 dir;	//The unit direction of the ray
+
+    // If true ray is tracing a shadow.
+    bool shadowTrace = false;
     
     Ray()
 	{

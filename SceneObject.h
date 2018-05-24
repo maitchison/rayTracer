@@ -61,6 +61,9 @@ public:
 
     // the anchor point of the object.
     glm::vec3 location;
+
+    // if this object should cast shadows or not.
+    bool castsShadows = true;    
     
 	SceneObject(glm::vec3 location = glm::vec3(0,0,0)) {
         this->location = location;

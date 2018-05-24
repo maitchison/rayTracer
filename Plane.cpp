@@ -32,9 +32,9 @@ RayIntersectionResult Plane::intersect(Ray ray)
 {	
 	glm::vec3 vdif = v1 - ray.pos;
 	float vdotn = glm::dot(ray.dir, normal);
-	if(fabs(vdotn) < 1.e-4) return RayIntersectionResult();
+	if(fabs(vdotn) < EPSILON) return RayIntersectionResult();
     float t = glm::dot(vdif, normal)/vdotn;
-	if(fabs(t) < 0.0001) return RayIntersectionResult();
+	if(fabs(t) < EPSILON) return RayIntersectionResult();
 	glm::vec3 q = ray.pos + ray.dir*t;
 	if (isInside(q)) {        
         return RayIntersectionResult(this, t, q, normal);

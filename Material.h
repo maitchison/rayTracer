@@ -19,11 +19,11 @@ public:
     // materials have colors and textures for diffuse.  If the texture is not assigned the color is used, if the 
     // texture is assigned is it modulated with the color.
     
-    glm::vec4 diffuseColor;                 // materials color (used for ambient color aswell)
+    Color diffuseColor;                     // materials color (used for ambient color aswell)
+    Color emisiveColor;                    // materials emissive color.
 	Texture2D* diffuseTexture=NULL;         // the materials diffuse texture
     Texture2D* normalTexture=NULL;          // the normal map for the texture
-    glm::vec3 specularColor;                // specular reflection color    
-
+    
     // refraction / reflection properties
     float reflectivity = 0.0f;              // how much the material is reflective 1=pefect mirror.
     float refractionIndex = 1.0f;           // refractive index of object.  Must set material diffuse alpha to see this.    
@@ -31,8 +31,8 @@ public:
     
     /* Create a default white material. */
 	Material() {        
-        this->diffuseColor = glm::vec4(1,1,1,1);
-        this->specularColor = glm::vec3(1,1,1);
+        this->diffuseColor = Color(1,1,1,1);
+        this->emisiveColor = Color(0,0,0,1);
     }    
 
     /** Returns if this material requires UV co-ordantes or not */
@@ -82,6 +82,15 @@ public:
     {
         Material* material = new Material();
         material->diffuseTexture = new CheckerboardTexture(scale, color1, color2);                
+        return material;
+    }
+
+    // Creates a default emissive material. 
+    static Material* Emissive(glm::vec4 color = glm::vec4(1,1,1,1))
+    {
+        Material* material = new Material();
+        material->diffuseColor = Color(0,0,0,1);
+        material->emisiveColor = color;
         return material;
     }
 };
