@@ -78,10 +78,10 @@ public:
     }
 
     // Creates a default checkerboard material. 
-    static Material* Checkerboard(glm::vec4 color1 = glm::vec4(1,1,1,1), glm::vec4 color2 = glm::vec4(0,0,0,1))
+    static Material* Checkerboard(float scale = 32.0f, glm::vec4 color1 = glm::vec4(1,1,1,1), glm::vec4 color2 = glm::vec4(0,0,0,1))
     {
         Material* material = new Material();
-        material->diffuseTexture = new CheckerboardTexture(color1, color2);        
+        material->diffuseTexture = new CheckerboardTexture(scale, color1, color2);                
         return material;
     }
 };

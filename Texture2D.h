@@ -98,14 +98,14 @@ public:
 class CheckerboardTexture : public Texture2D
 {
 private:
-    float scale;    
     glm::vec4 color1, color2;
 public:
-
-    CheckerboardTexture(glm::vec4 color1 = glm::vec4(1,1,1,1), glm::vec4 color2 = glm::vec4(0,0,0,1)) : Texture2D() {      
+    float scale;    
+    
+    CheckerboardTexture(float scale = 32.0f, glm::vec4 color1 = glm::vec4(1,1,1,1), glm::vec4 color2 = glm::vec4(0,0,0,1)) : Texture2D() {      
         this->color1 = color1;
         this->color2 = color2;
-        this->scale = 32.0f;
+        this->scale = scale;
     }
 
     /** Returns color at given uv co-ords. */

@@ -19,6 +19,8 @@
 #include "Plane.h"
 #include "Cylinder.h"
 #include "Polyhedron.h"
+#include "Scene.h"
+#include "Light.h"
 
 #include "Camera.h"
 #include "GFX.h"
@@ -34,7 +36,7 @@ using namespace std;
 float currentTime = 0.00;
 
 // Global list of scene objects.
-ContainerObject* scene;
+Scene* scene;
 
 // Main camera
 Camera camera;
@@ -63,19 +65,23 @@ int render_mode = RM_LQ;
 void redraw()
 {
     render_mode = RM_LQ;
-    camera.pixelOn = 0;
+    camera.reset();
 }
 
 void keyboard(unsigned char key, int x, int y)
-{
+{    
     switch (key) {
-        case 'w': camera.move(0,-5); redraw(); break;
-        case 's': camera.move(0,+5); redraw();break;
-        case 'a': camera.move(-5,0); redraw(); break;
-        case 'd': camera.move(5,0); redraw(); break;
-        case 'q': camera.rotate(-0.1f,0); redraw(); break;
-        case 'e': camera.rotate(0.1f,0); redraw(); break;
+        case 'w': camera.move(+5,0); break;
+        case 's': camera.move(-5,0); break;
+        case 'a': camera.move(0, -5); break;
+        case 'd': camera.move(0, +5); break;
+        case 'q': camera.rotate(-0.1f,0); break;
+        case 'e': camera.rotate(0.1f,0); break;
+        default:
+            // skip the redraw
+            return;
     }
+    redraw();
 }
 
 void update(void)
@@ -95,7 +101,7 @@ void update(void)
 			pixelsRendered = camera.render(20 * 1000, LQ_RAYS);
 			if (pixelsRendered == 0) {
 				render_mode = RM_HQ;
-				camera.pixelOn = 0;
+				camera.reset();
 			}
 			break;
 		case RM_HQ:
@@ -123,36 +129,28 @@ void update(void)
  */
 void initTestScene()
 {
+
+    // lights
+    scene->add(new Light(glm::vec3(0,30,0)));
+
     
 	//-- Create a pointer to a sphere object
 	Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
     Sphere* sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -30.0), 4.0);
     Sphere* sphere3 = new Sphere(glm::vec3(+8.0, -8.0, -20.0), 4.0);
 
-    Plane* plane = new Plane(glm::vec3(-20, -20, -20), 
-        glm::vec3(20, -20, -20), 
-        glm::vec3(20, -20, -50), 
-        glm::vec3(-20, -20, -50) 
-    ); 
-
-    Cylinder* cylinder = new Cylinder(glm::vec3(20,-20,-90), 5, 10);
+    Plane* plane = new Plane(glm::vec3(0, -10, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
 
     sphere1->material = Material::Default();
     sphere2->material = Material::Checkerboard();
     sphere3->material = Material::Reflective(glm::vec4(0,1,0,1));
-    plane->material = Material::Default(); plane->material->diffuseTexture = new MandelbrotTexture();
-    cylinder->material =  Material::Default(glm::vec4(1,0,0,1));
-
-    sphere1->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
-    sphere1->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);
-
+    plane->material = Material::Checkerboard(1.0f);
+    
 	//--Add the above to the list of scene objects.
 	scene->add(plane); 
-    scene->add(sphere1); 
-    scene->add(Polyhedron::Cube(glm::vec3(2,2,-10)));
+    scene->add(sphere1);     
     scene->add(sphere2); 
-    scene->add(sphere3); 
-    scene->add(cylinder);
+    scene->add(sphere3);     
 }
 
 /**
@@ -161,6 +159,9 @@ void initTestScene()
  * */
 void initCornellScene()
 {
+    // lights
+    scene->add(new Light(glm::vec3(0,30,0)));
+
     // infinite planes are a little faster than clipped planes and won't have potential artifacts at the edges.
     Plane* leftPlane = new Plane(glm::vec3(-40,0,0), glm::vec3(1,0,0));
     Plane* rightPlane = new Plane(glm::vec3(+40,0,0), glm::vec3(-1,0,0));
@@ -249,9 +250,9 @@ void initCornellScene()
 
 void initScene()
 {
-    scene = new ContainerObject();
+    scene = new Scene();
 
-    initCornellScene();
+    initTestScene();
 
     camera.scene = scene;
 }

@@ -4,15 +4,45 @@ Camera::Camera(glm::vec3 location) : SceneObject(location)
 {
 }
 
-Color Camera::trace(Ray ray, int depth)
+
+void Camera::calculateLighting(RayIntersectionResult intersection, const Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum)
 {
-    // todo: proper lighting system.
-	glm::vec3 lightPosition(10, 40, -3);
+    Material* material = intersection.target->material;
 
-	Color ambientLight = Color(0.2f,0.2f,0.2f, 1.0f);   //Ambient color of light
+    // diffuse light    
+    glm::vec3 lightVector = glm::normalize(light->location - intersection.location);
+    float lightDistance = glm::length(light->location - intersection.location);
+    float diffuseLight = glm::dot(lightVector, intersection.normal);
+    if (diffuseLight < 0) diffuseLight = 0;
 
-    float shinyness = 4.0;
+    // specular light
+    glm::vec3 reflVector = glm::reflect(-lightVector, intersection.normal);
+    glm::vec3 viewVector = glm::normalize(glm::vec3(intersection.location.x, intersection.location.y, -intersection.location.z));
+    float specularLight = glm::dot(reflVector, viewVector);
+    if (specularLight < 0) {
+        specularLight = 0;
+    } else {
+        specularLight = (float)pow(specularLight, material->shininess);
+    }
 
+    // shadow
+    if (light->shadow) 
+    {
+        Ray shadow(intersection.location + lightVector * EPSILON, lightVector);
+        RayIntersectionResult shadowIntersection = scene->intersect(shadow);    
+        if (shadowIntersection.didCollide() && shadowIntersection.t < lightDistance) {
+            diffuseLight = specularLight = 0;            
+        }    
+    }
+
+    // add light to summation.
+    ambientLightSum += light->ambientLight * light->color;
+    diffuseLightSum += diffuseLight * light->color;
+    specularLightSum += specularLight * light->color;
+}
+
+Color Camera::trace(Ray ray, int depth)
+{    
     RayIntersectionResult intersection = scene->intersect(ray);
 
     if (!intersection.didCollide()) return backgroundColor;      //If there is no intersection return background colour
@@ -24,15 +54,11 @@ Color Camera::trace(Ray ray, int depth)
     if (material->needsUV()) {        
         uv = intersection.target->getUV(intersection.location);        
     }
-
-    // sample materials properties
-    glm::vec4 diffuseColor = material->getDiffuseColor(uv);
-
-    // get normal vector    
-    glm::vec3 normalVector = intersection.normal;
-
+    
+    // modify normal vector based on normal map (if required)
     if (material->normalTexture) {
         // we find the 3 vectors required to transform the normal map from object space to world space.
+        glm::vec3 normalVector = intersection.normal;
         glm::vec3 materialNormal = glm::vec3(material->normalTexture->sampleNormalMap(uv) * 2.0f - 1.0f);
 
         // soften the normal map a little
@@ -44,53 +70,47 @@ Color Camera::trace(Ray ray, int depth)
         normalVector = glm::vec3(
             materialNormal.x*tangent + materialNormal.y*bitangent + materialNormal.z*normal             
         );
+
+        // update the intersection normal vector
+        intersection.normal = normalVector;
     }
 
-    // diffuse light    
-    glm::vec3 lightVector = glm::normalize(lightPosition - intersection.location);
-    float diffuseLight = glm::dot(lightVector, normalVector);
-    if (diffuseLight < 0) diffuseLight = 0;
-
-    // specular light
-    glm::vec3 reflVector = glm::reflect(-lightVector, normalVector);
-    glm::vec3 viewVector = glm::normalize(glm::vec3(intersection.location.x, intersection.location.y, -intersection.location.z));
-    float specularLight = glm::dot(reflVector, viewVector);
-    if (specularLight < 0) {
-        specularLight = 0;
-    } else {
-        specularLight = (float)pow(specularLight, shinyness);
+    // sum up the lighting from all lights.
+    Color ambientLight = Color(0,0,0,1);
+    Color diffuseLight = Color(0,0,0,1);
+    Color specularLight = Color(0,0,0,1);
+    for (int i = 0; i < scene->lights.size(); i++) {        
+        calculateLighting(intersection, scene->lights[i], ambientLight, diffuseLight, specularLight);        
     }
 
-    // shadow
-    Ray shadow(intersection.location + lightVector * 0.001f, lightVector);
-    RayIntersectionResult shadowIntersection = scene->intersect(shadow);    
-    if (shadowIntersection.didCollide() && shadowIntersection.t < lightVector.length()) {
-        diffuseLight = specularLight = 0;
-    }    
-
-    // apply the lighting model
-    // note: transpariency (alpha) only applies to the ambient and diffuse, the specular remains the same (as this is really a reflection)
-    float alpha = diffuseColor.a;
-    Color colorSum = (ambientLight * diffuseColor + diffuseLight * diffuseColor) * alpha + specularLight;
+    // combine lighting
+    Color materialColor = material->getDiffuseColor(uv);
+    Color color = (ambientLight + diffuseLight) * materialColor + specularLight;
     
     // reflection    
     if(material->reflectivity > 0 && depth < MAX_STEPS) {
-        glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVector);
+        glm::vec3 reflectedDir = glm::reflect(ray.dir, intersection.normal);
         Ray reflectedRay(intersection.location + reflectedDir * EPSILON, reflectedDir);
         Color reflectedCol = trace(reflectedRay, depth+1); 
-        colorSum = colorSum + (material->reflectivity*reflectedCol);        
+        color += (material->reflectivity*reflectedCol);        
     }
 
-    // transparency 
-    // note: we don't bump up the depth counter here as we can't recurse infinitely with transparency.
-    if (alpha < 1) {        
+    if (materialColor.a < 1) {        
         if (material->refractionIndex == 1.0) {        
+
+            // ----------------
+            // transparency 
+    
             // start the ray a little further on from where we hit.
             Ray transmittedRay = Ray(intersection.location + 0.001f * ray.dir, ray.dir);
             Color transmittedCol = trace(transmittedRay, depth); 
-            colorSum = colorSum + (1.0f-alpha)*transmittedCol;
+            color += (1.0f-materialColor.a)*transmittedCol;
             
         } else {            
+
+            // ----------------
+            // refraction
+    
             glm::vec3 refractedDir = glm::refract(ray.dir, intersection.normal, 1.0f/material->refractionIndex);
 
             Ray refractedRay = Ray(intersection.location + refractedDir * 0.001f , refractedDir);
@@ -103,15 +123,15 @@ Color Camera::trace(Ray ray, int depth)
                 glm::vec3 exitDir = glm::refract(refractedDir, -exitPoint.normal, material->refractionIndex);
                 Ray exitRay = Ray(exitPoint.location + exitDir * 0.001f, exitDir);
                 Color refractedCol = trace(exitRay, depth+1); 
-                colorSum = colorSum + (1.0f-alpha)*refractedCol;
+                color += (1.0f-materialColor.a)*refractedCol;
             } else {
                 // this case shouldn't happen, but might due to rounding... just ignore (i.e. use black color)
-                colorSum = Color(1,0,1,1);
+                color = Color(1,0,1,1);
             }
         }
     }
     
-	return colorSum;
+	return color;
 }
 
 /** Renders given number of pixels before returning control. */
@@ -162,7 +182,7 @@ int Camera::render(int pixels, int oversample, float defocus, bool autoReset)
 			glm::vec3 dir = glm::normalize(glm::vec3(rx, -ry, -1));
 
             // apply camera tranform
-            dir = glm::vec3(glm::vec4(dir.x, dir.y, dir.z, 1.0) * rotationMatrix);
+            dir = glm::vec3(glm::vec4(dir.x, dir.y, dir.z, 0.0) * rotationMatrix);
 
             // defocus
             if (defocus) {

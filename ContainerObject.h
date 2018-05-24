@@ -25,7 +25,7 @@ public:
     }
 
     /** Adds object to container. */
-    void add(SceneObject* object);
+    virtual void add(SceneObject* object);
 
     /** Intersects ray with object. */
 	RayIntersectionResult intersect(Ray ray) override; 

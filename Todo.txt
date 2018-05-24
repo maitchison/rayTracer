@@ -33,6 +33,11 @@ Maybe do in the future?
 
 Todo:
 [ ] multiple lights
+
+[ ] object transforms (useful for camera)
+[ ] transparient shadows
+[ ] camera defocus
+[ ] shortcut keys for effects
 [ ] fix up lighting materials
 
 [ ] local transforms (scale, rotation, translation)
@@ -44,9 +49,30 @@ Todo:
 [ ] tidy up code style
 
 [ ] Blury reflection / refraction.
+[ ] seperate out the lighting model from the trace
+
+Code clean up
+[ ] headers on all files
+[ ] maybe use VS to fixup formatting.
 
 If time:
 [ ] sub surface scattering :) 
+
+
+Bugs:
+shadows look wrong
+box is missing a face
+checkerboard on inf plane
+lighting on inf plane.
+
+Scenes:
+cornell
+dragon mesh
+something outside
+
+Debug modes?
+Depth?
+Different channels?
 
 
 References
