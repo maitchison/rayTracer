@@ -89,7 +89,7 @@ glm::vec3 distort(glm::vec3 v, float d)
 }
 
 
-glm::mat4x4 EuclideanRotationMatrix(glm::vec3 rotation)
+glm::mat4x4 EulerRotationMatrix(glm::vec3 rotation)
 {
     glm::mat4x4 rotationMatrix = glm::mat4x4();
     rotationMatrix = glm::rotate(rotationMatrix, rotation.x, glm::vec3(1,0,0));
@@ -97,3 +97,24 @@ glm::mat4x4 EuclideanRotationMatrix(glm::vec3 rotation)
     rotationMatrix = glm::rotate(rotationMatrix, rotation.z, glm::vec3(0,0,1));
     return rotationMatrix;
 }   
+
+float raySphereIntersection(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 sphereLocation, float radius)
+{    
+    glm::vec3 vdif = rayPos - sphereLocation;
+    float b = glm::dot(rayDir, vdif);
+    float len2 = glm::dot(vdif, vdif);
+    float c = len2 - radius*radius;
+    float delta = b*b - c;
+   
+	if (delta < EPSILON) return 0;
+
+    float t1 = -b - sqrt(delta);
+    float t2 = -b + sqrt(delta);
+    
+    float t = -1;
+    
+    if ((t1 >= 0) && ((t1 <= t2) || (t2 < 0))) t = t1;
+    if ((t2 >= 0) && ((t2 <= t1) || (t1 < 0))) t = t2;    
+
+    return t < 0 ? 0 : t;    
+}

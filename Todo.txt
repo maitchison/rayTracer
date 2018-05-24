@@ -37,9 +37,10 @@ Maybe do in the future?
 
 Todo:
 
+[ ] local transforms (scale, rotation, translation)
+
 [ ] global illumination model (ambient occlusion)
 
-[ ] local transforms (scale, rotation, translation)
 
 [ ] shortcut keys for effects
 
@@ -65,7 +66,7 @@ Bugs:
 [fixed] lighting on inf plane.      <- specular light was totally wrong on everything!
 [done] test multiple lights
 [..] still getting shadow specs :(
-[..] colored shadows not working
+[done] colored shadows not working
 
 box is missing a face
 

@@ -32,7 +32,7 @@ public:
         this->height = height;        
 	};
 	
-	RayIntersectionResult intersect(Ray ray) override;
+	RayIntersectionResult intersectObject(Ray ray) override;
 
     glm::vec2 getUV(glm::vec3 pos) override;
 	

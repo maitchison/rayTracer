@@ -35,10 +35,13 @@ float randf();
 int colorToInt24(Color color);
 
 /** Returns a rotation matrix for given euler angles (in degrees) */
-glm::mat4x4 EuclideanRotationMatrix(glm::vec3 rotation);
+glm::mat4x4 EulerRotationMatrix(glm::vec3 rotation);
 
 /** Randomly rotate vector r radians from it's current location. */
 glm::vec3 defocus(glm::vec3 v, float r);
 
 /** Similar to defocus, in that is rotates v a little bit, but much quicker.  d here is in units, so use small values. */
 glm::vec3 distort(glm::vec3 v, float d);
+
+/** Returns distance ray must travel before it hits sphere, or 0 if ray does not intersect sphere. */
+float raySphereIntersection(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 sphereLocation, float radius);

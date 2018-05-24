@@ -10,8 +10,13 @@ void ContainerObject::add(SceneObject* object)
     children.push_back(object);
 }
 
-RayIntersectionResult ContainerObject::intersect(Ray ray)
+RayIntersectionResult ContainerObject::intersectObject(Ray ray)
 {
+    // test our sphere bounds first (much faster for larger containers)
+    if (!this->sphereBoundsTest(ray)) {
+        return RayIntersectionResult::NoCollision();
+    } 
+    
     RayIntersectionResult best = RayIntersectionResult();    
 
     // we check each child object and take the closest collision.

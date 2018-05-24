@@ -11,9 +11,9 @@
 /**
 * Sphere's intersection method.  The input is a ray (pos, dir). 
 */
-RayIntersectionResult Sphere::intersect(Ray ray)
+RayIntersectionResult Sphere::intersectObject(Ray ray)
 {    
-    glm::vec3 vdif = ray.pos - location;
+    glm::vec3 vdif = ray.pos;
     float b = glm::dot(ray.dir, vdif);
     float len2 = glm::dot(vdif, vdif);
     float c = len2 - radius*radius;
@@ -38,7 +38,7 @@ RayIntersectionResult Sphere::intersect(Ray ray)
     result.target = this;
     result.t = t;
     result.location = ray.pos + ray.dir * t;
-    result.normal = glm::normalize(result.location - location);    
+    result.normal = glm::normalize(result.location);    
     
     return result;
 }

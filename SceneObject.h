@@ -51,33 +51,121 @@ public:
         this->location = location;
         this->normal = normal;                
     }
+
+    static RayIntersectionResult NoCollision() {
+        return RayIntersectionResult();
+    };
 };
 
 class SceneObject
 {
+protected:
+    // our local transforms
+    glm::vec3 location = glm::vec3(0,0,0);
+    glm::vec3 rotation = glm::vec3(0,0,0); // Euler angles
+    glm::vec3 scale = glm::vec3(1,1,1);
+    
+    // radius of objects bounding sphere in local space (i.e. unscaled). 
+    // A negative value disables the sphere bounding optimization.
+    
+    float boundingSphereRadius = -1;
+
+    void rebuildTransforms() {
+        localTransform = glm::mat4x4(1);        
+                
+        localTransform = glm::translate(localTransform, location);        
+        localTransform = glm::rotate(localTransform, rotation.x, glm::vec3(1,0,0));        
+        localTransform = glm::rotate(localTransform, rotation.y, glm::vec3(0,1,0));
+        localTransform = glm::rotate(localTransform, rotation.z, glm::vec3(0,0,1));
+        localTransform = glm::scale(localTransform, scale);
+        
+        localTransformInv = glm::inverse(localTransform);        
+    }
+
+    // local transformation matrix.
+    glm::mat4x4 localTransform = glm::mat4x4(1);
+
+    // inverse local transformation matrix. 
+    glm::mat4x4 localTransformInv = glm::mat4x4(1);
+
 public:
+
+    void setLocation(glm::vec3 location) {
+        this->location = location;
+        rebuildTransforms();
+    }
+
+    void setRotation(glm::vec3 rotation) {
+        this->rotation = rotation;
+        rebuildTransforms();
+    }
+
+    void setScale(glm::vec3 scale) {
+        if (scale.x == 0 || scale.y == 0 || scale.z == 0) {
+            printf("WARNING: Invalid transform.  Scale = 0.");
+            return;
+        }
+        this->scale = scale;
+        rebuildTransforms();
+    }
+
+    glm::vec3 getLocation() { return location; };
+    glm::vec3 getRotation() { return rotation; };
+    glm::vec3 getScale() { return scale; };
+    float getBoundingSphereRadius() { return boundingSphereRadius; };
+    glm::mat4x4 getLocalTransform() { return localTransform; }
+
     // this objects material.
 	Material* material;
-
-    // the anchor point of the object.
-    glm::vec3 location;
-
-    // if this object should cast shadows or not.
-    bool castsShadows = true;    
     
-	SceneObject(glm::vec3 location = glm::vec3(0,0,0)) {
-        this->location = location;
+    // if this object should cast shadows or not.
+    bool castsShadows = true;        
+    
+	SceneObject(glm::vec3 location = glm::vec3()) {
+        this->setLocation(location);
         this->material = new Material();
     }
     
-    virtual RayIntersectionResult intersect(Ray ray) {
-        return RayIntersectionResult();
+    /** Transforms ray into local space then intersects with object. */
+    RayIntersectionResult intersect(Ray ray) {
+        
+        // the idea here is to transform the ray into local space,
+        // perform the intersection, then transform the resulting 
+        // intersection back into parent space.  This allows for a complex
+        // graph based transformation system.
+        
+        ray.transform(localTransformInv);
+        RayIntersectionResult result = intersectObject(ray);
+        result.location = toParent(glm::vec4(result.location,1));
+        result.normal = toParent(glm::vec4(result.normal,0));
+        return result;
     }
+
+    /** This should be overridden for each class. */
+    virtual RayIntersectionResult intersectObject(Ray ray) {
+        return RayIntersectionResult::NoCollision();
+    }    
 
 	virtual ~SceneObject() {}    
 
     virtual glm::vec2 getUV(glm::vec3 pos) {return glm::vec2(); };
 
     virtual glm::vec3 getTangent(glm::vec3 p) {return glm::vec3(); };
+
+    /** converts from parent coordanate space to local space. */
+    glm::vec3 toLocal(glm::vec4 p) {
+        return glm::vec3(p * localTransform);
+    }
+
+    /** converts from parent coordanate space to local space. */
+    glm::vec3 toParent(glm::vec4 p) {
+        return glm::vec3(p * localTransformInv);
+    }
+    
+    /** Tests if ray intersects this objects sphere bounding box.  Objects without bounding spheres will always pass this test. 
+     * Ray should be in local space.  */
+    bool sphereBoundsTest(Ray ray) {
+        return boundingSphereRadius < 0 ? true : raySphereIntersection(ray.pos, ray.dir, glm::vec3(0,0,0), boundingSphereRadius) > 0;
+    }
 
 };

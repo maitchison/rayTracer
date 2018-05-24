@@ -19,7 +19,7 @@ protected:
     std::vector<SceneObject*> children;
 
 public:	
-	ContainerObject(void) : SceneObject()
+	ContainerObject(glm::vec3 location = glm::vec3()) : SceneObject(location)
     {
 
     }
@@ -28,7 +28,7 @@ public:
     virtual void add(SceneObject* object);
 
     /** Intersects ray with object. */
-	RayIntersectionResult intersect(Ray ray) override; 
+	RayIntersectionResult intersectObject(Ray ray) override; 
 
     /** Sets material for all child objects. */
     void setMaterial(Material* material)

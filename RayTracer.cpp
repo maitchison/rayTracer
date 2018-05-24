@@ -18,7 +18,7 @@
 #include "Sphere.h"
 #include "Plane.h"
 #include "Cylinder.h"
-#include "Polyhedron.h"
+#include "Cube.h"
 #include "Scene.h"
 #include "Light.h"
 
@@ -43,6 +43,9 @@ Camera camera;
 
 // --------------------------------
 
+bool DOUBLE_RENDER = false;
+bool AUTO_RENDER = true;
+
 const int LQ_RAYS = 1;
 const int HQ_RAYS = 16;
 
@@ -58,6 +61,9 @@ int frameOn = 0;
 
 
 int render_mode = RM_LQ;
+
+// if assigned this object will animate.
+SceneObject* animatedObject = NULL;
 
 // --------------------------------
 
@@ -79,11 +85,13 @@ void keyboard(unsigned char key, int x, int y)
         case 'c': camera.move(0, 0, -5); break;
         case 'q': camera.rotate(-0.1f,0); break;
         case 'e': camera.rotate(0.1f,0); break;
+        case ' ': break; // force render
         default:
             // skip the redraw
             return;
     }
-    redraw();
+    // auto render draws all the time, otherwise redraw on movement.
+    if (!AUTO_RENDER) redraw();
 }
 
 void update(void)
@@ -95,6 +103,10 @@ void update(void)
 		return;
 	}
 
+    if (animatedObject) {        
+        animatedObject->setRotation(animatedObject->getRotation() + 0.001f * glm::vec3(2,1,0));
+    }
+
 	clock_t t;
 	t = clock();
 	int pixelsRendered = 0;
@@ -102,8 +114,12 @@ void update(void)
 		case RM_LQ:
 			pixelsRendered = camera.render(20 * 1000, LQ_RAYS);
 			if (pixelsRendered == 0) {
-				render_mode = RM_HQ;
-				camera.reset();
+                if (DOUBLE_RENDER) {
+				    render_mode = RM_HQ;
+				    camera.reset();
+                } else if (AUTO_RENDER) {
+                    camera.reset();
+                }
 			}
 			break;
 		case RM_HQ:
@@ -116,7 +132,7 @@ void update(void)
 	
 	float timeTaken = float(clock() - t) / CLOCKS_PER_SEC;	
 	float pixelsPerSecond = (timeTaken == 0) ? -1 : pixelsRendered / timeTaken;
-	if (counter == 0) {
+	if (counter == 10) {
 		printf("Pixels per second = %fk.\n", pixelsPerSecond/1000);
 	}
 
@@ -160,6 +176,44 @@ void initTestScene()
     scene->add(new Sphere(glm::vec3(0,-20,0),3.0f));
 }
 
+
+/** Mostly to test the transforms. */
+void initAnimatedScene() 
+{
+    // lights
+    scene->add(new Light(glm::vec3(-10,30,0), Color(1,0.5,0.5,1)));
+    scene->add(new Light(glm::vec3(+10,30,0), Color(0.5,1,0.5,1)));
+    scene->add(new Light(glm::vec3(0,30,0), Color(0.5,0.5,1,1)));
+    	
+    Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+    scene->add(plane); 
+    
+    /*
+    Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
+    scene->add(sphere1); 
+    */
+        
+    SceneObject* box = new Cube(glm::vec3(0,0,-50), glm::vec3(10,10,10));    
+
+    //SceneObject* box = new Sphere(glm::vec3(0,0,-50), 15);    
+    
+    /*
+    SceneObject* box = new Plane(
+            glm::vec3(-20,-20,0), 
+            glm::vec3(+20,-20,0), 
+            glm::vec3(+20,+20,0),
+            glm::vec3(-20,+20,0));
+    */  
+
+    animatedObject = box;
+    scene->add(box);    
+
+    plane->material = Material::Checkerboard(1.0f);
+	
+    // origin marker
+    scene->add(new Sphere(glm::vec3(0,-20,0),3.0f));
+}
+
 /**
  * This is a standard cornell box (https://en.wikipedia.org/wiki/Cornell_box) with some additional objects to demonstrate
  * the raytracers capabilities and meet assignment requirements. 
@@ -188,8 +242,8 @@ void initCornellScene()
 
     // a framed mandelbrot picture in the background
 
-    Polyhedron* pictureFrame = Polyhedron::Cube(glm::vec3(0,0,-80), glm::vec3(50,50,10));    
-    Polyhedron* picture = Polyhedron::Cube(glm::vec3(0,0,-79), glm::vec3(45,45,10));
+    Cube* pictureFrame = new Cube(glm::vec3(0,0,-80), glm::vec3(50,50,10));    
+    Cube* picture = new Cube(glm::vec3(0,0,-79), glm::vec3(45,45,10));
 
     Material* woodMaterial = new Material();
     woodMaterial->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
@@ -203,14 +257,14 @@ void initCornellScene()
 
     // create pedestals with object ontop.
     glm::vec3 pos;
-    Polyhedron* petastool;
+    Cube* petastool;
     SceneObject* object;
     
     // note this would work better with grouped objects and object transforms... 
 
     // 1> refractive:
     pos = glm::vec3(-30,-40,-50);
-    petastool = Polyhedron::Cube(pos, glm::vec3(10,10,10));
+    petastool = new Cube(pos, glm::vec3(10,10,10));
     object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
     object->material = Material::Refractive(Color(0.5,0.1,0.1,0.1));
     scene->add(petastool);
@@ -218,7 +272,7 @@ void initCornellScene()
     
     // 2> transparient:
     pos = glm::vec3(-10,-40,-50);
-    petastool = Polyhedron::Cube(pos, glm::vec3(10,10,10));
+    petastool = new Cube(pos, glm::vec3(10,10,10));
     object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
     object->material = Material::Default(Color(0.1,0.5,0.1,0.1));
     scene->add(petastool);
@@ -226,7 +280,7 @@ void initCornellScene()
 
     // 3> textured:
     pos = glm::vec3(+10,-40,-50);
-    petastool = Polyhedron::Cube(pos, glm::vec3(10,10,10));
+    petastool = new Cube(pos, glm::vec3(10,10,10));
     object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
     object->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
     object->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);
@@ -235,14 +289,12 @@ void initCornellScene()
 
     // 4> standard:
     pos = glm::vec3(+30,-40,-50);
-    petastool = Polyhedron::Cube(pos, glm::vec3(10,10,10));
+    petastool = new Cube(pos, glm::vec3(10,10,10));
     object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
     object->material = Material::Default(Color(0.1f,0.1f,0.6f,1.0f));
     scene->add(petastool);
     scene->add(object);
-    
-    scene->add(Polyhedron::Cube(glm::vec3(10,0,-30),glm::vec3(5,5,5)));
-    
+        
     scene->add(leftPlane);
     scene->add(rightPlane);
     scene->add(backPlane);
@@ -260,7 +312,7 @@ void initScene()
 {
     scene = new Scene();
 
-    initCornellScene();
+    initAnimatedScene();
 
     camera.scene = scene;
 }

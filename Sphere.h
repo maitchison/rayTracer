@@ -32,13 +32,12 @@ public:
         this->radius = 1;
 	};
 
-    Sphere(glm::vec3 location, float radius) : SceneObject()
+    Sphere(glm::vec3 location, float radius) : SceneObject(location)
 	{	
-        this->location = location;
         this->radius = radius;
 	};
 
-	RayIntersectionResult intersect(Ray ray) override;
+	RayIntersectionResult intersectObject(Ray ray) override;
     glm::vec2 getUV(glm::vec3 pos) override;
     glm::vec3 getTangent(glm::vec3 p) override;
 };

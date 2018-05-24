@@ -54,7 +54,7 @@ public:
 
     /** converts from world co-ordanate space to local space. */
     glm::vec4 toLocal(glm::vec4 p) {
-        glm::mat4x4 rotationMatrix = glm::mat4x4();
+        glm::mat4x4 rotationMatrix = glm::mat4x4(1);
         rotationMatrix = glm::rotate(rotationMatrix, rotation.x, glm::vec3(1,0,0));
         rotationMatrix = glm::rotate(rotationMatrix, rotation.y, glm::vec3(0,1,0));
         rotationMatrix = glm::rotate(rotationMatrix, rotation.z, glm::vec3(0,0,1));
@@ -79,6 +79,6 @@ public:
 protected:
 
     /** Calculates lighting of given light at this intersection point. */
-    void calculateLighting(RayIntersectionResult intersection, const Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum);
+    void calculateLighting(RayIntersectionResult intersection, Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum);
 	
 };

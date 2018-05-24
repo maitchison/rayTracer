@@ -22,10 +22,18 @@ public:
 		dir = glm::vec3(0, 0, -1);    
 	}	
 	
-    Ray(glm::vec3 pos, glm::vec3 dir)		
+    Ray(glm::vec3 pos, glm::vec3 dir, bool shadowTrace = false)		
 	{
         this->pos = pos;
         this->dir = glm::normalize(dir);        
-		
+        this->shadowTrace = shadowTrace;		
 	};
+
+    /** Transform ray into another coordinate space as per transformtion matrix. */
+    void transform(glm::mat4x4 transform) 
+    {
+        pos = glm::vec3(transform * glm::vec4(pos,1));
+        // could save a normalise here if I made just a rotation matrix? right?
+        dir = glm::normalize(glm::vec3(transform * glm::vec4(dir,0)));
+    }
 };

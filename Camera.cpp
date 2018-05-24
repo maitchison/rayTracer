@@ -5,12 +5,12 @@ Camera::Camera(glm::vec3 location) : SceneObject(location)
 }
 
 
-void Camera::calculateLighting(RayIntersectionResult intersection, const Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum)
+void Camera::calculateLighting(RayIntersectionResult intersection, Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum)
 {
     Material* material = intersection.target->material;
 
     // diffuse light    
-    glm::vec3 lightVector = glm::normalize(light->location - intersection.location);    
+    glm::vec3 lightVector = glm::normalize(light->getLocation() - intersection.location);    
     float diffusePower = glm::dot(lightVector, intersection.normal);
     if (diffusePower < 0) diffusePower = 0;
     
@@ -47,7 +47,7 @@ void Camera::calculateLighting(RayIntersectionResult intersection, const Light* 
             shadow.shadowTrace=true; // this will ignore objects that do not cast shadows.
 
             RayIntersectionResult shadowIntersection = scene->intersect(shadow);    
-            lightDistance = glm::length(light->location - shadowTestPoint);
+            lightDistance = glm::length(light->getLocation() - shadowTestPoint);
 
             if (shadowIntersection.didCollide() && shadowIntersection.t < lightDistance) {
                 // we sample the uv, so that textured transpariency will work :)
@@ -189,7 +189,7 @@ int Camera::render(int pixels, int oversample, float defocusBlur, bool autoReset
 	int pixelsDone = 0;
 
     // camera rotation matrix
-    glm::mat4x4 rotationMatrix = EuclideanRotationMatrix(rotation);
+    glm::mat4x4 rotationMatrix = EulerRotationMatrix(rotation);
     
 	#pragma loop(hint_parallel(4))  
 	for (int i = 0; i < pixels; i++) {

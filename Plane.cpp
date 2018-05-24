@@ -28,19 +28,19 @@ bool Plane::isInside(glm::vec3 p)
 /**
 * Plane's intersection method.  The input is a ray (pos, dir). 
 */
-RayIntersectionResult Plane::intersect(Ray ray)
+RayIntersectionResult Plane::intersectObject(Ray ray)
 {	
 	glm::vec3 vdif = v1 - ray.pos;
 	float vdotn = glm::dot(ray.dir, normal);
-	if(fabs(vdotn) < EPSILON) return RayIntersectionResult();
+	if(fabs(vdotn) < EPSILON) return RayIntersectionResult::NoCollision();
     float t = glm::dot(vdif, normal)/vdotn;
-	if(fabs(t) < EPSILON) return RayIntersectionResult();
+	if(fabs(t) < EPSILON) return RayIntersectionResult::NoCollision();
 	glm::vec3 q = ray.pos + ray.dir*t;
 	if (isInside(q)) {        
         return RayIntersectionResult(this, t, q, normal);
     } 
     else {
-        return RayIntersectionResult();
+        return RayIntersectionResult::NoCollision();
     }
 }
 

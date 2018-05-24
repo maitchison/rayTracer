@@ -3,7 +3,7 @@
 
 #include "Cylinder.h"
 
-RayIntersectionResult Cylinder::intersect(Ray ray)
+RayIntersectionResult Cylinder::intersectObject(Ray ray)
 {    
     // we project everything down onto the xz plane and do a circle intersection test.
     // this gives us two points of intersection.

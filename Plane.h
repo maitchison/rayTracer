@@ -27,7 +27,7 @@ private:
 public:	
 	Plane(void);
 	
-    /** Creates a plane as defined by 4 vertices. */
+    /** Creates a bounded plane as defined by 4 vertices. */
     Plane(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4)
 	{
         this->v1 = v1;
@@ -39,7 +39,7 @@ public:
         this->normal = glm::normalize(glm::cross(v2-v1, v4-v1)); 		
         this->tangent = glm::normalize(v2-v1); 		
         this->bitangent = glm::normalize(v4-v1); 		
-        this->uvScale = 1.0f/glm::vec2(glm::length(v2-v1), glm::length(v4-v1));
+        this->uvScale = 1.0f/glm::vec2(glm::length(v2-v1), glm::length(v4-v1));        
 	};
 
     /** Creates a plane as defined by a point a normal, and an 'up' direction. */
@@ -55,7 +55,7 @@ public:
 
 	bool isInside(glm::vec3 p);
 	
-	RayIntersectionResult intersect(Ray ray) override;
+	RayIntersectionResult intersectObject(Ray ray) override;
 
     glm::vec2 getUV(glm::vec3 pos) override;
     glm::vec3 getTangent(glm::vec3 p) override { return this->tangent; }
