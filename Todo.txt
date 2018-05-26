@@ -34,12 +34,13 @@ Feature list:
 [*] camera defocus
 [*] local transforms (scale, rotation, translation) (man this was hard!)
 [*] bounding spheres for certian objects. (i.e. cubes, but works in general for any container)
+[*] global illumination model 
 
 Maybe do in the future?
 
 Todo:
 
-[ ] global illumination model (ambient occlusion)
+[ ] sample buffer
 
 [ ] rendermodes:
     - norm quick render
@@ -49,7 +50,6 @@ Todo:
 [ ] shortcut keys for effects
     - show bounding spheres
 
-[ ] polygon meshes
 [ ] tidy up code style
 
 [ ] seperate out the lighting model from the trace
@@ -57,9 +57,6 @@ Todo:
 Code clean up
 [ ] headers on all files
 [ ] maybe use VS to fixup formatting.
-
-If time:
-[ ] sub surface scattering :) 
 
 
 Bugs:

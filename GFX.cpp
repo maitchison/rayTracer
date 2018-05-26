@@ -6,21 +6,37 @@ Date Feb 2018
 
 #include "GFX.h"
 
+/** Returns if (x,y) is in screen bounds or not. */
+bool inBounds(int x, int y) {
+	return ((x >= 0) && (y >= 0) && (x < SCREEN_WIDTH) && (y < SCREEN_HEIGHT));
+}
+
 /** Place a pixel on the frame buffer. */
 void GFX::putPixel(int x, int y, Color col)
 {
-	if ((x < 0) | (y < 0) | (x >= SCREEN_WIDTH) | (y >= SCREEN_HEIGHT)) {
-		return;
-	}
-	buffer[y][x] = colorToInt24(col);
+    if (!inBounds(x,y)) return;
+	sampleBuffer[y][x] = Color(0,0,0,0);
+    addSample(x,y,col);
 }
 
-void GFX::clear(Color col)
+/** Adds a simple to the buffer, samples are averaged by weight. */
+void GFX::addSample(int x, int y, Color col, float weight)
 {
+	if (!inBounds(x,y) || weight == 0.0f) return;
+	col.a = 1.0f;
+    sampleBuffer[y][x] += (col*weight);
+	buffer[y][x] = colorToInt24(sampleBuffer[y][x] / sampleBuffer[y][x].a);
+}
+
+void GFX::clear(Color col, bool shallow)
+{
+    col.a = 0.0;
 	uint32_t c = colorToInt24(col);
 	for (int y = 0; y < SCREEN_HEIGHT; y++) {
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
-			buffer[y][x] = c;
+            if (!shallow)
+			    buffer[y][x] = c;
+            sampleBuffer[y][x] = col;
 		}
 	}
 }

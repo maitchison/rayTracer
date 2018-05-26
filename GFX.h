@@ -23,12 +23,18 @@ class GFX
 {
 	
 	uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+
+    // stores acculated color, where the total weight is recorded in the alpha chanel.
+    // for example the color 10,5,1,10 has a color of (1.0, 0.5, 0.1) and 10 samples.
+    Color sampleBuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+
 	GLuint tex;
 
 public:
 	void putPixel(int x, int y, Color col);
-	void clear(Color col);
-	void blit();
+    void addSample(int x, int y, Color col, float weight = 1.0);
+	void clear(Color col = Color(0,0,0,1), bool shallow=false);
+	void blit();    
 	void init(void);
 };
 

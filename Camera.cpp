@@ -115,7 +115,6 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
         return Color(intersection.normal,1.0f);
     }
 
-    
     // sum up the lighting from all lights.
     Color ambientLight = Color(0,0,0,1);
     Color diffuseLight = Color(0,0,0,1);
@@ -233,7 +232,6 @@ int Camera::render(int pixels, bool autoReset)
 	
 	int pixelsDone = 0;
     
-	#pragma loop(hint_parallel(4))  
 	for (int i = 0; i < pixels; i++) {
 
 		pixelOn++;		
@@ -245,17 +243,20 @@ int Camera::render(int pixels, bool autoReset)
 			return i;
 		}
 
-		int x = 0;
-		int y = 0;
+		int x = pixelOn % SCREEN_WIDTH;
+		int y = pixelOn / SCREEN_WIDTH;        
 
-		x = pixelOn % SCREEN_WIDTH;
-		y = pixelOn / SCREEN_WIDTH;
+        if (lqMode && ((x&1==1) || (y&1==1))) {
+            continue;
+        }
 		
 		Color outputCol = Color(0, 0, 0, 1);
 
-		for (int j = 0; j < superSample; j++) {
-			float jitterx = (superSample == 1) ? 0.5 : randf();
-			float jittery = (superSample == 1) ? 0.5 : randf();
+        int requiredSamples = (superSample == 0 ? 1 : superSample);
+
+		for (int j = 0; j < requiredSamples; j++) {        
+			float jitterx = (superSample == 0) ? 0.5 : randf();
+			float jittery = (superSample == 0) ? 0.5 : randf();
 
 			// find the rays direction
 			float rx = (2 * ((x + jitterx) / SCREEN_WIDTH) - 1) * tan(fov / 2 * M_PI / 180) * aspectRatio;
@@ -272,14 +273,21 @@ int Camera::render(int pixels, bool autoReset)
 			
 			Ray ray = Ray(location, dir);
 			Color col = trace(ray, 0, (lightingModel == LM_GI) ? GI_SAMPLES : 0);
-			outputCol = outputCol + (col * (1.0f/superSample));
+			outputCol = outputCol + (col * (1.0f/requiredSamples));
 		}
 				
-        gfx.putPixel(x, y, outputCol);
-        gfx.putPixel(x, y+2, Color(1,1,1,1));
-        gfx.putPixel(x, y+1, Color(0,0,0,1));
-        gfx.putPixel(x, y+3, Color(0,0,0,1));
-    
+        // higher weight for more samples.
+
+        if (lqMode) {
+            // render 2x2 block
+            gfx.addSample(x+1, y, outputCol, 0.01f + superSample);        
+            gfx.addSample(x, y+1, outputCol, 0.01f + superSample);        
+            gfx.addSample(x+1, y+1, outputCol, 0.01f + superSample);        
+        }
+        gfx.addSample(x, y, outputCol, 0.01f + superSample);        
+        
+        
+        
 		pixelsDone++;
 
 	}

@@ -43,11 +43,11 @@ Camera camera;
 
 // --------------------------------
 
-bool DOUBLE_RENDER = false;
+bool DOUBLE_RENDER = true;
 bool AUTO_RENDER = true;
 
-const int LQ_RAYS = 1;
-const int HQ_RAYS = 16;
+const int LQ_RAYS = 0;
+const int HQ_RAYS = 1;
 
 const int RM_NONE = 0;
 const int RM_LQ = 1;
@@ -72,6 +72,7 @@ void redraw()
 {
     render_mode = RM_LQ;
     camera.reset();
+    gfx.clear();
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -90,8 +91,16 @@ void keyboard(unsigned char key, int x, int y)
             // skip the redraw
             return;
     }
-    // auto render draws all the time, otherwise redraw on movement.
-    if (!AUTO_RENDER) redraw();
+    
+    if (AUTO_RENDER) {
+        // auto render draws all the time, but camera needs reseting on movement
+        gfx.clear(Color(0,0,0,0),true);
+        camera.reset();
+        render_mode = RM_LQ;
+    } else {
+        // redraw when changes are made.
+        redraw();
+    }
 }
 
 void update(void)
@@ -112,9 +121,12 @@ void update(void)
 	int pixelsRendered = 0;
 	switch (render_mode) {
 		case RM_LQ:
-			pixelsRendered = camera.render(20 * 1000, LQ_RAYS);
+            camera.superSample = LQ_RAYS;
+            camera.GI_SAMPLES = 4; // super quick render...
+            camera.lqMode = true;
+			pixelsRendered = camera.render(5 * 1000, false);
 			if (pixelsRendered == 0) {
-                if (DOUBLE_RENDER) {
+                if (DOUBLE_RENDER) {                    
 				    render_mode = RM_HQ;
 				    camera.reset();
                 } else if (AUTO_RENDER) {
@@ -123,7 +135,10 @@ void update(void)
 			}
 			break;
 		case RM_HQ:
-			pixelsRendered = camera.render(2 * 100, HQ_RAYS);
+            camera.superSample = HQ_RAYS;
+            camera.GI_SAMPLES = 64;
+            camera.lqMode = false;
+			pixelsRendered = camera.render(5 * 100, true);
 			if (pixelsRendered == 0) {
 				render_mode = RM_NONE;
 			}
@@ -161,7 +176,8 @@ void initGIScene()
     plane->material->reflectivity = 0.5f;
     plane->material->reflectionBlur = 0.01f;
 
-    sphere3->material->emisiveColor = Color(1,1,1,1)*5.0f;
+    sphere3->material->emisiveColor = Color(1,0.2f,0.9f,1)*1.0f;
+    sphere2->material->emisiveColor = Color(1,0.75f,0,1)*0.5f;
     
 	//--Add the above to the list of scene objects.
 	scene->add(plane); 
@@ -175,7 +191,7 @@ void initGIScene()
     camera.lightingModel = LM_GI;    
 
     // blue sky light
-    camera.backgroundColor = Color(0.03,0.05,0.15,1);
+    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 1.0f;
 }
 
 /**

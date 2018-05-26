@@ -54,11 +54,14 @@ public:
     // maximum recursive depth (e.g. reflections).
     int MAX_RECUSION_DEPTH = 9;
 
-    // Number of rays to trace per pixel.  1 for standard render.	 
-	int superSample=1;
+    // Number of rays to trace per pixel.  0 disables supersampling.
+	int superSample=0;
 
     // Randomly defocus rays by this number of radians.  Requires high oversampling for best results.
     float defocusBlur = 0.0f;
+
+    // renders only 1/4th of the pixels.
+    bool lqMode = false;
 
     // The lighting model to use when rendering.
     LightingModel lightingModel = LM_DIRECT;
