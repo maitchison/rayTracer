@@ -25,11 +25,10 @@ public:
     }
 	
     /** Creates a cylinder . */
-    Cylinder(glm::vec3 location, float radius, float height)
+    Cylinder(glm::vec3 location, float radius, float height) : SceneObject(location)
 	{
-        this->location = location;
         this->radius = radius;
-        this->height = height;        
+        this->height = height;      
 	};
 	
 	RayIntersectionResult intersectObject(Ray ray) override;

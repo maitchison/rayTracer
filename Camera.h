@@ -13,6 +13,24 @@
 #include "Light.h"
 #include "Scene.h"
 
+// various lighting models for the render
+enum LightingModel {
+    // direct lighting model, based on blinn.
+    LM_DIRECT,
+    // indirect global illumination.  Much slower.
+    LM_GI,
+    // displays UV co-ords
+    LM_UV,
+    // displays depth
+    LM_DEPTH,
+    // displays normal
+    LM_NORMAL,
+    // displays world coords
+    LM_WORLD,
+    // displays local coords
+    LM_LOCAL
+};
+
 class Camera : SceneObject
 {
 protected:
@@ -21,14 +39,32 @@ protected:
 
 	int pixelOn = 0;
 
-    // maximum number of recursive steps
-    const int MAX_STEPS = 5;
-
-    // Euclidean rotation angles.
-	glm::vec3 rotation = glm::vec3(0, 0, 0);    
-
+    // a bit of a hack, but this is the intersection result from the last call to 'trace'.
+    // idealy I'd return this and the color from the trace function in some kind of struct.
+    RayIntersectionResult lastTraceIntersection;
+    
 public:
+
+    // ----------------------------
+    // Render parameters:
+
+    // number of global illumination samples to test per lighting calculation. 
+    int GI_SAMPLES = 32;    
 	
+    // maximum recursive depth (e.g. reflections).
+    int MAX_RECUSION_DEPTH = 9;
+
+    // Number of rays to trace per pixel.  1 for standard render.	 
+	int superSample=1;
+
+    // Randomly defocus rays by this number of radians.  Requires high oversampling for best results.
+    float defocusBlur = 0.0f;
+
+    // The lighting model to use when rendering.
+    LightingModel lightingModel = LM_DIRECT;
+
+    // ----------------------------
+    
     // the scene to cast rays through.
 	Scene* scene;
 
@@ -36,44 +72,43 @@ public:
 
 	Camera(glm::vec3 location = glm::vec3(0,0,0));
 	
-	Color trace(Ray ray, int depth = 0);
+
+    /**
+     * Traces ray through camera's scene and calculates lighting at intersection point.
+     * @ray The ray to test
+     * @depth Recusion depth
+     * @giSamples Number of GI samples to use, 0 to disable.
+     * @returns color at the interesection point of the ray and the scene.
+     **/
+	Color trace(Ray ray, int depth = 0, int giSamples = 0);
 	
 	/** Render this number of pixels.  Rendering can be done bit by bit.  
 	 @param pixels: maximum number of pixels to render.  -1 renders entire image.
-	 @param oversample: number of rays to trace per pixel.  1 for standard render.
-	 @param defocusBlur: randomly defocus rays by this number of radians.  Requires high oversampling for best results.
 	 @param autoReset: causes renderer to render next frame once this frame finishes rendering.
 	*/
-	int render(int pixels, int oversample=1, float defocusBlur = 0.0f, bool autoReset=false);	
+	int render(int pixels, bool autoReset=false);	
 
     /** Reset the camerea rendering. */
     void reset()
     {
         pixelOn = 0;
     }
-
-    /** converts from world co-ordanate space to local space. */
-    glm::vec4 toLocal(glm::vec4 p) {
-        glm::mat4x4 rotationMatrix = glm::mat4x4(1);
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.x, glm::vec3(1,0,0));
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.y, glm::vec3(0,1,0));
-        rotationMatrix = glm::rotate(rotationMatrix, rotation.z, glm::vec3(0,0,1));
-        return p * rotationMatrix;
-    }
     
     /** moves camera.
      * forward: amount to move forwards / backwards
      * strafe: amount to strafe left / right. */
     void move(float forward, float strafe = 0.0f, float up = 0.0f) {        
-        location += glm::vec3(toLocal(glm::vec4(0,0,-1,0))) * forward;
-        location += glm::vec3(toLocal(glm::vec4(1,0,0,0))) * strafe;        
-        location += glm::vec3(toLocal(glm::vec4(0,1,0,0))) * up; 
+        location += glm::vec3(toParent(glm::vec4(0,0,-1,0))) * forward;
+        location += glm::vec3(toParent(glm::vec4(1,0,0,0))) * strafe;        
+        location += glm::vec3(toParent(glm::vec4(0,1,0,0))) * up; 
+        this->rebuildTransforms();
     }
 
     /** rotates camera */
     void rotate(float dy, float dx=0) {        
         rotation.x += dx;
         rotation.y += dy;
+        this->rebuildTransforms();
     }
 
 protected:

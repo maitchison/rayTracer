@@ -24,11 +24,21 @@ class SceneObject;
 struct RayIntersectionResult
 {
 public:
-    // the location of the ray intersection.
+    // the location of the ray intersection in parent coordinates (if collision occured).
     glm::vec3 location;    
+
+    // the location of the ray intersection in local coordinates (if collision occured).
+    glm::vec3 local;
 
     // surface normal at the point of collision.
     glm::vec3 normal;
+
+    // the transformed ray used during intersection test.
+    // note: this probably isn't needed.
+    Ray transformedRay;
+
+    // uv co-ords of target at intersection point.
+    glm::vec2 uv;
     
     // pointer to object we collided with.
     SceneObject* target = NULL;
@@ -45,10 +55,11 @@ public:
     RayIntersectionResult() {};
 
     /** Creates a ray intersection result with given parameters. */
-    RayIntersectionResult(SceneObject* target, float t, glm::vec3 location, glm::vec3 normal = glm::vec3()) {
+    RayIntersectionResult(SceneObject* target, float t, glm::vec3 local, glm::vec3 normal = glm::vec3()) {
         this->target = target;
         this->t = t;
-        this->location = location;
+        this->local = local;
+        this->location = local;
         this->normal = normal;                
     }
 
@@ -64,7 +75,7 @@ protected:
     glm::vec3 location = glm::vec3(0,0,0);
     glm::vec3 rotation = glm::vec3(0,0,0); // Euler angles
     glm::vec3 scale = glm::vec3(1,1,1);
-    
+
     // radius of objects bounding sphere in local space (i.e. unscaled). 
     // A negative value disables the sphere bounding optimization.
     
@@ -72,14 +83,25 @@ protected:
 
     void rebuildTransforms() {
         localTransform = glm::mat4x4(1);        
-                
-        localTransform = glm::translate(localTransform, location);        
+
+        localTransform = glm::translate(localTransform, location);                
         localTransform = glm::rotate(localTransform, rotation.x, glm::vec3(1,0,0));        
         localTransform = glm::rotate(localTransform, rotation.y, glm::vec3(0,1,0));
-        localTransform = glm::rotate(localTransform, rotation.z, glm::vec3(0,0,1));
-        localTransform = glm::scale(localTransform, scale);
+        localTransform = glm::rotate(localTransform, rotation.z, glm::vec3(0,0,1));        
+        localTransform = glm::scale(localTransform, scale);        
         
+        // not sure if this is better or not?
+        /*
+        localTransformInv = glm::mat4x4(1);        
+        localTransformInv = glm::scale(localTransformInv, 1.0f/scale);        
+        localTransformInv = glm::rotate(localTransformInv, -rotation.z, glm::vec3(0,0,1));
+        localTransformInv = glm::rotate(localTransformInv, -rotation.y, glm::vec3(0,1,0));
+        localTransformInv = glm::rotate(localTransformInv, -rotation.x, glm::vec3(1,0,0));        
+        localTransformInv = glm::translate(localTransformInv, -location);                   
+        */
+
         localTransformInv = glm::inverse(localTransform);        
+
     }
 
     // local transformation matrix.
@@ -114,6 +136,7 @@ public:
     glm::vec3 getScale() { return scale; };
     float getBoundingSphereRadius() { return boundingSphereRadius; };
     glm::mat4x4 getLocalTransform() { return localTransform; }
+    glm::mat4x4 getLocalTransformInv() { return localTransformInv; }
 
     // this objects material.
 	Material* material;
@@ -133,11 +156,27 @@ public:
         // perform the intersection, then transform the resulting 
         // intersection back into parent space.  This allows for a complex
         // graph based transformation system.
+        // Each class must implement the 'intersectObject' method, but can perform all calculations in local
+        // space which simplifies things a lot and allows for nested transforms (as we transform the ray not
+        // the object)
         
         ray.transform(localTransformInv);
         RayIntersectionResult result = intersectObject(ray);
+        if (result.target && result.target->material->needsUV()) {
+            // fetch uv only if required.
+            result.uv = result.target->getUV(result.local); 
+        }
+
+        // transform world coords                    
         result.location = toParent(glm::vec4(result.location,1));
-        result.normal = toParent(glm::vec4(result.normal,0));
+        
+        //note: this is not the proper trainsform.  It should be something to do with the inverse transpose,
+        //if the objects scale is set to non uniform this this will be wrong.
+        result.normal = glm::normalize(toParent(glm::vec4(result.normal,0)));
+
+        // we may need to know something about the transformed ray
+        result.transformedRay = ray;
+
         return result;
     }
 
@@ -148,18 +187,20 @@ public:
 
 	virtual ~SceneObject() {}    
 
-    virtual glm::vec2 getUV(glm::vec3 pos) {return glm::vec2(); };
+    /** returns uv coords of pos (in local space) */
+    virtual glm::vec2 getUV(glm::vec3 pos) { return glm::vec2(); };
 
-    virtual glm::vec3 getTangent(glm::vec3 p) {return glm::vec3(); };
+    /** returns tangent p (in local space) */
+    virtual glm::vec3 getTangent(glm::vec3 p) { return glm::vec3(); };
 
     /** converts from parent coordanate space to local space. */
     glm::vec3 toLocal(glm::vec4 p) {
-        return glm::vec3(p * localTransform);
+        return glm::vec3(localTransformInv * p);
     }
 
     /** converts from parent coordanate space to local space. */
     glm::vec3 toParent(glm::vec4 p) {
-        return glm::vec3(p * localTransformInv);
+        return glm::vec3(localTransform * p);
     }
     
     /** Tests if ray intersects this objects sphere bounding box.  Objects without bounding spheres will always pass this test. 

@@ -18,6 +18,9 @@ namespace glm {
 // a small constant.
 const float EPSILON = 0.00001;
 
+// math doesn't always have this defined for some reason.
+#define PI 3.141592654f
+
 
 /** Loads a file from disk into at std::vector */
 void loadFile(std::vector<unsigned char>& buffer, const std::string& filename);
@@ -30,6 +33,9 @@ int clipi(int x, int a,int b);
 
 /** Returns random number in [0,1] */
 float randf();
+
+/** Returns fractional part of f (signed) */
+float frac(float f);
 
 /** Convert color to 24bit form. */
 int colorToInt24(Color color);
@@ -45,3 +51,7 @@ glm::vec3 distort(glm::vec3 v, float d);
 
 /** Returns distance ray must travel before it hits sphere, or 0 if ray does not intersect sphere. */
 float raySphereIntersection(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 sphereLocation, float radius);
+
+void print(glm::mat4x4 m);
+void print(glm::vec4 v);
+void print(glm::vec3 v);

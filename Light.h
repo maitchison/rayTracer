@@ -15,7 +15,7 @@ public:
     // enables light shadows
     bool shadow = true;
 
-    Light(glm::vec3 location, Color color = Color(1,1,1,1)) : SceneObject(location) {
+    Light(glm::vec3 location = glm::vec3(0,0,0), Color color = Color(1,1,1,1)) : SceneObject(location) {
         this->color = color;
     }
 

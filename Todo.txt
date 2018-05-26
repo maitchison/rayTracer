@@ -32,24 +32,26 @@ Feature list:
 [*] transparient shadows
 [*] blury reflections 
 [*] camera defocus
+[*] local transforms (scale, rotation, translation) (man this was hard!)
+[*] bounding spheres for certian objects. (i.e. cubes, but works in general for any container)
 
 Maybe do in the future?
 
 Todo:
 
-[ ] local transforms (scale, rotation, translation)
-
 [ ] global illumination model (ambient occlusion)
 
+[ ] rendermodes:
+    - norm quick render
+    - 1 to slow render
+    - 2 to GI render
 
 [ ] shortcut keys for effects
-
-[ ] container bounds (just a sphere is fine, this will help optimize boxes for example)
+    - show bounding spheres
 
 [ ] polygon meshes
 [ ] tidy up code style
 
-[ ] Blury reflection / refraction.
 [ ] seperate out the lighting model from the trace
 
 Code clean up
@@ -65,10 +67,13 @@ Bugs:
 [fixed] checkerboard on inf plane   <- fixed with scaling of texture
 [fixed] lighting on inf plane.      <- specular light was totally wrong on everything!
 [done] test multiple lights
-[..] still getting shadow specs :(
 [done] colored shadows not working
+[fixed] uvs are wrong               <- was calculating them in the wrong coordinate space
+[fixed] lighting is broken?         <- very complex to fix, in the end it was that I was using
+                                       p*m instead of m*p so I was using the transpose of the matrix
+                                       which is ~ the inverse if only rotations are involved 
+                                       (which is what I was using it for before, so I didn't notice)
 
-box is missing a face
 
 
 Scenes:

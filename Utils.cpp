@@ -58,6 +58,11 @@ float randf() {
     return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
+float frac(float f)
+{
+    return f - int(f);
+}
+
 /** Convert color to 24bit form. */
 int colorToInt24(Color color)
 {
@@ -70,7 +75,7 @@ int colorToInt24(Color color)
 glm::vec3 defocus(glm::vec3 v, float r)
 {    
     v = glm::normalize(v);    
-    float theta = randf()*2.0f*3.1415926;
+    float theta = randf()*2*PI;
     float phi = randf()*r;
 
     glm::mat4x4 rotationMatrix = glm::mat4x4();
@@ -117,4 +122,21 @@ float raySphereIntersection(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 sphere
     if ((t2 >= 0) && ((t2 <= t1) || (t1 < 0))) t = t2;    
 
     return t < 0 ? 0 : t;    
+}
+
+void print(glm::mat4x4 m)
+{
+    for (int i = 0; i < 4; i ++) {
+        printf("%f %f %f %f\n", (float)m[0][i], (float)m[1][i], (float)m[2][i], (float)m[3][i]);
+    }
+}
+
+void print(glm::vec3 v)
+{
+    printf("(%f %f %f)\n", v.x, v.y, v.z);    
+}
+
+void print(glm::vec4 v)
+{
+    printf("(%f %f %f %f)\n", v.x, v.y, v.z, v.w);    
 }

@@ -79,8 +79,9 @@ RayIntersectionResult Cylinder::intersectObject(Ray ray)
     RayIntersectionResult result = RayIntersectionResult();
     result.target = this;
     result.t = t;
-    result.location = ray.pos + ray.dir * t;
-    result.normal = normal;
+    result.local = ray.pos + ray.dir * t;
+    result.location = result.local;
+    result.normal = normal;    
         
     return result;
 }

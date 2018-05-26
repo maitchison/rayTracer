@@ -50,12 +50,8 @@ void Camera::calculateLighting(RayIntersectionResult intersection, Light* light,
             lightDistance = glm::length(light->getLocation() - shadowTestPoint);
 
             if (shadowIntersection.didCollide() && shadowIntersection.t < lightDistance) {
-                // we sample the uv, so that textured transpariency will work :)
-                glm::vec2 uv = glm::vec2(0,0);
-                if (material->needsUV()) {        
-                    uv = intersection.target->getUV(intersection.location);        
-                }
-                Color occluderColor = shadowIntersection.target->material->getDiffuseColor(uv);
+                // we sample the uv, so that textured transpariency will work :)        
+                Color occluderColor = shadowIntersection.target->material->getDiffuseColor(intersection.uv);
                 float transmission = 1.0f - occluderColor.a;
                 diffuseLight *= (transmission * occluderColor);
                 specularLight *= (transmission * occluderColor);
@@ -77,25 +73,29 @@ void Camera::calculateLighting(RayIntersectionResult intersection, Light* light,
     specularLightSum += specularLight * light->color;
 }
 
-Color Camera::trace(Ray ray, int depth)
-{    
+Color Camera::trace(Ray ray, int depth, int giSamples)
+{        
     RayIntersectionResult intersection = scene->intersect(ray);
+
+    lastTraceIntersection = intersection;
+
+    // sepcial lighting models.
+    switch (lightingModel) {
+        case LM_UV: return Color(intersection.uv.x, intersection.uv.y, 0,1);        
+        case LM_DEPTH: return Color(intersection.t/100,intersection.t/100,intersection.t/100,1);
+        case LM_WORLD: return Color(intersection.location/100.0f,1.0);
+        case LM_LOCAL: return Color(intersection.local/5.0f,1.0);
+    }    
 
     if (!intersection.didCollide()) return backgroundColor;      //If there is no intersection return background colour
 
     Material* material = intersection.target->material;
-
-    // we check if uv co-ords need calculating as they can be quite slow (transidental functions for example).  
-    glm::vec2 uv = glm::vec2(0,0);
-    if (material->needsUV()) {        
-        uv = intersection.target->getUV(intersection.location);        
-    }
     
     // modify normal vector based on normal map (if required)
     if (material->normalTexture) {
         // we find the 3 vectors required to transform the normal map from object space to world space.
         glm::vec3 normalVector = intersection.normal;
-        glm::vec3 materialNormal = glm::vec3(material->normalTexture->sampleNormalMap(uv) * 2.0f - 1.0f);
+        glm::vec3 materialNormal = glm::vec3(material->normalTexture->sampleNormalMap(intersection.uv) * 2.0f - 1.0f);
 
         // soften the normal map a little
         materialNormal = glm::normalize(materialNormal + 1.0f * glm::vec3(0,0,1));
@@ -111,6 +111,11 @@ Color Camera::trace(Ray ray, int depth)
         intersection.normal = normalVector;
     }
 
+    if (lightingModel == LM_NORMAL) {
+        return Color(intersection.normal,1.0f);
+    }
+
+    
     // sum up the lighting from all lights.
     Color ambientLight = Color(0,0,0,1);
     Color diffuseLight = Color(0,0,0,1);
@@ -119,12 +124,52 @@ Color Camera::trace(Ray ray, int depth)
         calculateLighting(intersection, scene->lights[i], ambientLight, diffuseLight, specularLight);        
     }
 
+    // add in global lighting (if required)
+    if (giSamples > 0) {
+                    
+        for (int i = 0; i < giSamples; i++) {
+            // trace a path from this point in a random direction, then use that points radience as a 'light'                        
+            // we take the ray pointing in the normal direction then 'defocus' it by up to 90 degrees.  This ?should? give uniform
+            // sampling over the hemisphere.  Would probably be better use a more practical PDF, such as one that samples in the reflected
+            // direction more? but this will still work, it'll just converge slowly.
+                        
+            // this is a fast (but biased) way to sample from the hemisphere, just pick a random location, normalise it, then
+            // if it's on the wrong side reverse it.             
+            glm::vec3 rayDir = glm::normalize(glm::vec3(randf()-0.5f,randf()-0.5f,randf()-0.5f)); 
+            if (glm::dot(rayDir, intersection.normal) < 0) rayDir = -rayDir;            
+
+            // this is a better way to sample the hemisphere, but it's much slower.
+            //glm::vec3 rayDir = defocus(intersection.normal, PI/2);
+            Ray giRay = Ray(intersection.location + rayDir * 0.01f, rayDir);            
+            
+            // We then test the color of this ray.  
+            // We set giSamples to 1 if gi was enabled, and 0 otherwise, this gives a 2 bounce lighting model.            
+            Color sampleRadiance = trace(giRay, depth+1, giSamples > 1 ? 1 : 0);             
+
+            if (sampleRadiance.r != sampleRadiance.r) {
+                printf("Hmm, radiance is nan?\n");
+                continue;
+            }
+
+            // We are doing the integral by sampling, so each radiance sample need to be adjusted as follows:
+            // (as explained here https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing/global-illumination-path-tracing-practical-implementation.
+            // we must divide by the pdf (which is 1/2pi) aswell as n dot d (which is simply theta)
+            //
+            // essentially we use using the diffuse lighting model only here.  for specular it's better to just
+            // set some reflectivty (+ blur if you like)
+            
+            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/GI_SAMPLES) * glm::dot(rayDir, intersection.normal));
+        }
+        
+    }
+
     // combine lighting
-    Color materialColor = material->getDiffuseColor(uv);
-    Color color = (ambientLight + diffuseLight) * materialColor + specularLight + material->emisiveColor;
-    
+    Color materialColor = material->getDiffuseColor(intersection.uv);
+    Color color = (ambientLight + diffuseLight) * materialColor + specularLight + material->emisiveColor;    
+        
     // reflection    
-    if(material->reflectivity > 0 && depth < MAX_STEPS) {
+    if(material->reflectivity > 0 && depth < MAX_RECUSION_DEPTH) {
+        
         glm::vec3 reflectedDir = glm::reflect(ray.dir, intersection.normal);
         
         // add bluring
@@ -132,8 +177,8 @@ Color Camera::trace(Ray ray, int depth)
             reflectedDir = defocus(reflectedDir, material->reflectionBlur);
         }
 
-        Ray reflectedRay(intersection.location + reflectedDir * EPSILON, reflectedDir);
-        Color reflectedCol = trace(reflectedRay, depth+1); 
+        Ray reflectedRay(intersection.location + reflectedDir * 0.01f, reflectedDir);
+        Color reflectedCol = trace(reflectedRay, depth+1, giSamples); 
         color += (material->reflectivity*reflectedCol);        
     }
 
@@ -145,7 +190,7 @@ Color Camera::trace(Ray ray, int depth)
     
             // start the ray a little further on from where we hit.
             Ray transmittedRay = Ray(intersection.location + 0.001f * ray.dir, ray.dir);
-            Color transmittedCol = trace(transmittedRay, depth); 
+            Color transmittedCol = trace(transmittedRay, depth, giSamples); 
             color += (1.0f-materialColor.a)*transmittedCol;
             
         } else {            
@@ -164,7 +209,7 @@ Color Camera::trace(Ray ray, int depth)
             if (exitPoint.didCollide()) {
                 glm::vec3 exitDir = glm::refract(refractedDir, -exitPoint.normal, material->refractionIndex);
                 Ray exitRay = Ray(exitPoint.location + exitDir * 0.001f, exitDir);
-                Color refractedCol = trace(exitRay, depth+1); 
+                Color refractedCol = trace(exitRay, depth+1, giSamples); 
                 color += (1.0f-materialColor.a)*refractedCol;
             } else {
                 // this case shouldn't happen, but might due to rounding... just ignore (i.e. use black color)
@@ -177,7 +222,7 @@ Color Camera::trace(Ray ray, int depth)
 }
 
 /** Renders given number of pixels before returning control. */
-int Camera::render(int pixels, int oversample, float defocusBlur, bool autoReset)
+int Camera::render(int pixels, bool autoReset)
 {	
 	int totalPixels = SCREEN_WIDTH * SCREEN_HEIGHT;
 	float aspectRatio = float(SCREEN_WIDTH / SCREEN_HEIGHT);
@@ -187,9 +232,6 @@ int Camera::render(int pixels, int oversample, float defocusBlur, bool autoReset
 	}
 	
 	int pixelsDone = 0;
-
-    // camera rotation matrix
-    glm::mat4x4 rotationMatrix = EulerRotationMatrix(rotation);
     
 	#pragma loop(hint_parallel(4))  
 	for (int i = 0; i < pixels; i++) {
@@ -211,9 +253,9 @@ int Camera::render(int pixels, int oversample, float defocusBlur, bool autoReset
 		
 		Color outputCol = Color(0, 0, 0, 1);
 
-		for (int j = 0; j < oversample; j++) {
-			float jitterx = (oversample == 1) ? 0.5 : randf();
-			float jittery = (oversample == 1) ? 0.5 : randf();
+		for (int j = 0; j < superSample; j++) {
+			float jitterx = (superSample == 1) ? 0.5 : randf();
+			float jittery = (superSample == 1) ? 0.5 : randf();
 
 			// find the rays direction
 			float rx = (2 * ((x + jitterx) / SCREEN_WIDTH) - 1) * tan(fov / 2 * M_PI / 180) * aspectRatio;
@@ -221,7 +263,7 @@ int Camera::render(int pixels, int oversample, float defocusBlur, bool autoReset
 			glm::vec3 dir = glm::normalize(glm::vec3(rx, -ry, -1));
 
             // apply camera tranform
-            dir = glm::vec3(glm::vec4(dir.x, dir.y, dir.z, 0.0) * rotationMatrix);
+            dir = toParent(glm::vec4(dir.x, dir.y, dir.z, 0.0));
 
             // defocus
             if (defocusBlur > EPSILON) {
@@ -229,8 +271,8 @@ int Camera::render(int pixels, int oversample, float defocusBlur, bool autoReset
             }
 			
 			Ray ray = Ray(location, dir);
-			Color col = trace(ray);
-			outputCol = outputCol + (col * (1.0f/oversample));
+			Color col = trace(ray, 0, (lightingModel == LM_GI) ? GI_SAMPLES : 0);
+			outputCol = outputCol + (col * (1.0f/superSample));
 		}
 				
         gfx.putPixel(x, y, outputCol);

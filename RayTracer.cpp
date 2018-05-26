@@ -83,8 +83,8 @@ void keyboard(unsigned char key, int x, int y)
         case 'd': camera.move(0, +5); break;
         case 'z': camera.move(0, 0, +5); break;
         case 'c': camera.move(0, 0, -5); break;
-        case 'q': camera.rotate(-0.1f,0); break;
-        case 'e': camera.rotate(0.1f,0); break;
+        case 'q': camera.rotate(+0.1f,0); break;
+        case 'e': camera.rotate(-0.1f,0); break;
         case ' ': break; // force render
         default:
             // skip the redraw
@@ -140,6 +140,42 @@ void update(void)
 	
 	glutPostRedisplay();
 	lastFrameTime = currentTime;
+}
+
+/** Simple scene to test GI. */
+void initGIScene()
+{    
+    //scene->add(new Light(glm::vec3(-10,30,0), Color(1,1,1,1)));
+	//-- Create a pointer to a sphere object
+	Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
+    Sphere* sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -30.0), 4.0);
+    Sphere* sphere3 = new Sphere(glm::vec3(-16.0, +8.0, -20.0), 4.0);
+
+    Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+
+    sphere1->material = Material::Default(Color(1,1,1,1));
+    sphere2->material = Material::Checkerboard();
+    sphere3->material = Material::Default(Color(0,1,0,1));    
+    plane->material = Material::Checkerboard(1.0f);
+    
+    plane->material->reflectivity = 0.5f;
+    plane->material->reflectionBlur = 0.01f;
+
+    sphere3->material->emisiveColor = Color(1,1,1,1)*5.0f;
+    
+	//--Add the above to the list of scene objects.
+	scene->add(plane); 
+    scene->add(sphere1);     
+    scene->add(sphere2); 
+    scene->add(sphere3);     
+
+    // origin marker
+    scene->add(new Sphere(glm::vec3(0,-20,0),3.0f));
+
+    camera.lightingModel = LM_GI;    
+
+    // blue sky light
+    camera.backgroundColor = Color(0.03,0.05,0.15,1);
 }
 
 /**
@@ -312,7 +348,7 @@ void initScene()
 {
     scene = new Scene();
 
-    initAnimatedScene();
+    initGIScene();
 
     camera.scene = scene;
 }
