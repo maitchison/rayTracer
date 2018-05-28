@@ -78,14 +78,15 @@ glm::vec3 defocus(glm::vec3 v, float r)
     float theta = randf()*2*PI;
     float phi = randf()*r;
 
-    glm::mat4x4 rotationMatrix = glm::mat4x4();
+    glm::mat4x4 rotationMatrix = glm::mat4x4(1);
 
     // any orthogonal vector will do.
-    glm::vec3 orthogonalVector = (v.x==v.y==0) ? glm::vec3(1,0,0) : glm::normalize(glm::vec3(-v.x, v.y,0));
+    glm::vec3 orthogonalVector = (v.x==v.y==0) ? glm::vec3(1,0,0) : glm::normalize(glm::vec3(-v.y, v.x,0));
     
-    rotationMatrix = glm::rotate(rotationMatrix, phi, orthogonalVector);
     rotationMatrix = glm::rotate(rotationMatrix, theta, v);
-    return glm::vec3(rotationMatrix * glm::vec4(v, 1));
+    rotationMatrix = glm::rotate(rotationMatrix, phi, orthogonalVector);
+    
+    return glm::vec3(rotationMatrix * glm::vec4(v, 0));
 }
 
 glm::vec3 distort(glm::vec3 v, float d)

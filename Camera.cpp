@@ -131,14 +131,31 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
             // we take the ray pointing in the normal direction then 'defocus' it by up to 90 degrees.  This ?should? give uniform
             // sampling over the hemisphere.  Would probably be better use a more practical PDF, such as one that samples in the reflected
             // direction more? but this will still work, it'll just converge slowly.
+
                         
             // this is a fast (but biased) way to sample from the hemisphere, just pick a random location, normalise it, then
             // if it's on the wrong side reverse it.             
             glm::vec3 rayDir = glm::normalize(glm::vec3(randf()-0.5f,randf()-0.5f,randf()-0.5f)); 
-            if (glm::dot(rayDir, intersection.normal) < 0) rayDir = -rayDir;            
+            float diffusePower = glm::dot(rayDir, intersection.normal);
+            if (diffusePower < 0) {
+                rayDir = -rayDir;                    
+                diffusePower = -diffusePower;
+            }
 
-            // this is a better way to sample the hemisphere, but it's much slower.
-            //glm::vec3 rayDir = defocus(intersection.normal, PI/2);
+            float sqrtDiffusePower = sqrt(diffusePower);
+
+            // a nice optimization.  rays at a strong angle of incidence will contribute much less to the 
+            // lighting, so we can sample them less by discarding them.
+
+            // we 'split the difference' here, so cosTheta is 0.25 then we apply a 50% discard chance with a
+            // 50% attenuation.  If we simply used the diffuse power for discarding and took the sample at
+            // full strength we'd get artifcats as we converge as occasinally very bright samples would be taken
+            // and strong angles.
+            
+            if (randf() > sqrtDiffusePower) continue;                
+            diffusePower = sqrtDiffusePower;
+            
+
             Ray giRay = Ray(intersection.location + rayDir * 0.01f, rayDir);            
             
             // We then test the color of this ray.  
@@ -157,7 +174,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
             // essentially we use using the diffuse lighting model only here.  for specular it's better to just
             // set some reflectivty (+ blur if you like)
             
-            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/GI_SAMPLES) * glm::dot(rayDir, intersection.normal));
+            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/GI_SAMPLES) * diffusePower);
         }
         
     }

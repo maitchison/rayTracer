@@ -148,7 +148,7 @@ void update(void)
 	float timeTaken = float(clock() - t) / CLOCKS_PER_SEC;	
 	float pixelsPerSecond = (timeTaken == 0) ? -1 : pixelsRendered / timeTaken;
 	if (counter == 10) {
-		printf("Pixels per second = %fk.\n", pixelsPerSecond/1000);
+		printf("Pixels per second = %dk.\n", (int)(pixelsPerSecond/1000));
 	}
 
 	counter++;
