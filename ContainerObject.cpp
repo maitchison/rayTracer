@@ -19,6 +19,14 @@ RayIntersectionResult ContainerObject::intersectObject(Ray ray)
     
     RayIntersectionResult best = RayIntersectionResult();    
 
+    if (showBounds) {
+        best.t = raySphereIntersection(ray.pos, ray.dir, glm::vec3(0,0,0), boundingSphereRadius);
+        best.local = best.location = ray.pos + ray.dir * best.t;
+        best.target = this;
+        best.normal = glm::normalize(location - best.location);
+        return best;
+    }
+
     // we check each child object and take the closest collision.
     for (int i = 0; i < children.size(); i++) {
 

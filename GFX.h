@@ -31,7 +31,7 @@ class GFX
 	GLuint tex;
 
 public:
-	void putPixel(int x, int y, Color col);
+	void putPixel(int x, int y, Color col, bool shallow=false);    
     void addSample(int x, int y, Color col, float weight = 1.0);
 	void clear(Color col = Color(0,0,0,1), bool shallow=false);
 	void blit();    

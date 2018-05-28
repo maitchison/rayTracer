@@ -5,6 +5,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+
 #include "SceneObject.h"
 #include "Utils.h"
 #include "Ray.h"
@@ -31,7 +32,7 @@ enum LightingModel {
     LM_LOCAL
 };
 
-class Camera : SceneObject
+class Camera : public SceneObject
 {
 protected:
     

@@ -11,12 +11,19 @@ bool inBounds(int x, int y) {
 	return ((x >= 0) && (y >= 0) && (x < SCREEN_WIDTH) && (y < SCREEN_HEIGHT));
 }
 
-/** Place a pixel on the frame buffer. */
-void GFX::putPixel(int x, int y, Color col)
+/** Place a pixel on the frame buffer.
+ * If shallow is true then only the color buffer is updated, not the sample buffer.
+ * This allows writing to the screen without destroying the sample buffer.
+ */
+void GFX::putPixel(int x, int y, Color col, bool shallow)
 {
     if (!inBounds(x,y)) return;
-	sampleBuffer[y][x] = Color(0,0,0,0);
-    addSample(x,y,col);
+    if (shallow) {
+        buffer[y][x] = colorToInt24(col);
+    } else {
+	    sampleBuffer[y][x] = Color(0,0,0,0);
+        addSample(x,y,col);
+    }
 }
 
 /** Adds a simple to the buffer, samples are averaged by weight. */

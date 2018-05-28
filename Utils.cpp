@@ -141,3 +141,8 @@ void print(glm::vec4 v)
 {
     printf("(%f %f %f %f)\n", v.x, v.y, v.z, v.w);    
 }
+
+float maxf(float a, float b)
+{
+    return a > b ? a : b;
+}

@@ -4,7 +4,7 @@ CC_FLAGS=-std=c++11 -O3
 LINK_FLAGS=-lm -lGL -lGLU -lglut
 
 # File names
-EXEC = RayTracer
+EXEC = RayTracer.exe
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
  

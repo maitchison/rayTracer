@@ -48,6 +48,8 @@ public:
             case TC_WRAP:
                 u = u - (int)u;
                 v = v - (int)v;
+                if (u < 0) u+=1;
+                if (v < 0) v+=1;
                 break;
             case TC_CLAMP:
                 u = clipf(u, 0, 1);

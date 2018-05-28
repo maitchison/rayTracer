@@ -24,6 +24,8 @@ public:
 
     }
 
+    bool showBounds = false;
+
     /** Adds object to container. */
     virtual void add(SceneObject* object);
 

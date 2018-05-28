@@ -22,7 +22,7 @@ bool Plane::isInside(glm::vec3 p)
     float a3 = glm::dot(glm::cross(v4-v3,p-v3), normal);
     float a4 = glm::dot(glm::cross(v1-v4,p-v4), normal);	
 	
-	return (a1 > 0 && a2 > 0 && a3 > 0 && a4 > 0);
+	return (a1 >= -EPSILON && a2 >= -EPSILON && a3 >= -EPSILON && a4 >= -EPSILON);
 }
 
 /**

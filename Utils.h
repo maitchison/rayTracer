@@ -37,6 +37,9 @@ float randf();
 /** Returns fractional part of f (signed) */
 float frac(float f);
 
+/** Returns max of a,b */
+float maxf(float a, float b);
+
 /** Convert color to 24bit form. */
 int colorToInt24(Color color);
 

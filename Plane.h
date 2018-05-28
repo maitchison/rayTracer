@@ -13,7 +13,7 @@
 
 class Plane : public SceneObject
 {
-private:
+protected:
     glm::vec3 v1, v2, v3, v4;  // The four vertices bounding the plane    
     glm::vec3 normal;          // The planes normal. 
     glm::vec3 tangent;         // The planes tangent, facing in the 'up' direction. 
@@ -25,10 +25,13 @@ private:
     
 
 public:	
-	Plane(void);
+	Plane() : SceneObject()
+    {
+
+    }
 	
     /** Creates a bounded plane as defined by 4 vertices. */
-    Plane(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4)
+    Plane(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4) : SceneObject()
 	{
         this->v1 = v1;
         this->v2 = v2;
@@ -53,11 +56,37 @@ public:
         this->uvScale = 1.0f/glm::vec2(glm::length(normal), glm::length(up));
 	};
 
-	bool isInside(glm::vec3 p);
+	virtual bool isInside(glm::vec3 p);
 	
 	RayIntersectionResult intersectObject(Ray ray) override;
 
     glm::vec2 getUV(glm::vec3 pos) override;
     glm::vec3 getTangent(glm::vec3 p) override { return this->tangent; }
 	
+};
+
+class Triangle : public Plane
+{
+public:	
+	
+    Triangle(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) : Plane()
+	{
+        this->v1 = v1;
+        this->v2 = v2;
+        this->v3 = v3;
+        this->bounded = true;
+        this->normal = glm::normalize(glm::cross(v2-v1, v3-v1)); 		
+        this->tangent = glm::normalize(v2-v1); 		
+        this->bitangent = glm::normalize(v3-v1); 		
+        this->uvScale = 1.0f/glm::vec2(glm::length(v2-v1), glm::length(v3-v1));        
+	};
+    
+	bool isInside(glm::vec3 p) override {
+        
+        float a1 = glm::dot(glm::cross(v2-v1,p-v1), normal);
+        float a2 = glm::dot(glm::cross(v3-v2,p-v2), normal);
+        float a3 = glm::dot(glm::cross(v1-v3,p-v3), normal);        
+	
+	    return (a1 >= 0 && a2 >= 0 && a3 >= 0);
+    }
 };

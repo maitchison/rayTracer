@@ -35,12 +35,14 @@ Feature list:
 [*] local transforms (scale, rotation, translation) (man this was hard!)
 [*] bounding spheres for certian objects. (i.e. cubes, but works in general for any container)
 [*] global illumination model 
+[*] sample buffer
+[*] ply mesh loader
+[*] mesh rendering (with fast subdivision)
 
 Maybe do in the future?
 
 Todo:
 
-[ ] sample buffer
 
 [ ] rendermodes:
     - norm quick render

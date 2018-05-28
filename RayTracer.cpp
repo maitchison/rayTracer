@@ -21,9 +21,11 @@
 #include "Cube.h"
 #include "Scene.h"
 #include "Light.h"
+#include "Mesh.h"
 
 #include "Camera.h"
 #include "GFX.h"
+#include "PLYReader.h"
 
 #include "math.h"
 #include <GL/glut.h>
@@ -75,22 +77,41 @@ void redraw()
     gfx.clear();
 }
 
+void specialKeyboard(int key, int x, int y)
+{
+    switch (key) {
+        case GLUT_KEY_F1: camera.lightingModel = LM_DIRECT; break;
+        case GLUT_KEY_F2: camera.lightingModel = LM_GI; break;    
+        case GLUT_KEY_F3: camera.lightingModel = LM_DEPTH; break;    
+        case GLUT_KEY_F4: camera.lightingModel = LM_WORLD; break;    
+        case GLUT_KEY_F5: camera.lightingModel = LM_LOCAL; break;    
+        case GLUT_KEY_F6: camera.lightingModel = LM_NORMAL; break;    
+        case GLUT_KEY_F7: camera.lightingModel = LM_UV; break;    
+    }
+    redraw();
+}
+
 void keyboard(unsigned char key, int x, int y)
 {    
     switch (key) {
-        case 'w': camera.move(+5,0); break;
-        case 's': camera.move(-5,0); break;
-        case 'a': camera.move(0, -5); break;
-        case 'd': camera.move(0, +5); break;
-        case 'z': camera.move(0, 0, +5); break;
-        case 'c': camera.move(0, 0, -5); break;
+        case 'w': camera.move(+3,0); break;
+        case 's': camera.move(-3,0); break;
+        case 'a': camera.move(0, -3); break;
+        case 'd': camera.move(0, +3); break;
+        case 'z': camera.move(0, 0, +1); break;
+        case 'c': camera.move(0, 0, -1); break;
         case 'q': camera.rotate(+0.1f,0); break;
         case 'e': camera.rotate(-0.1f,0); break;
-        case ' ': break; // force render
+        case ' ': break; // force render        
         default:
             // skip the redraw
             return;
     }
+
+    printf("Camera at:");
+    print(camera.getLocation());
+    printf("Camera rotation:");
+    print(camera.getRotation());
     
     if (AUTO_RENDER) {
         // auto render draws all the time, but camera needs reseting on movement
@@ -192,6 +213,93 @@ void initGIScene()
 
     // blue sky light
     camera.backgroundColor = Color(0.03,0.05,0.15,1) * 1.0f;
+}
+
+/** This scene contains 100 meshes each with 800k triangles (that is 80 million trianges).
+ * It demsonstrates the efficentcy of the mesh rendering system for high poly counts. */
+void initManyMeshScene()
+{
+    // default light
+    scene->add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
+	
+    // ground plane
+    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+    scene->add(plane); 
+
+    // mesh objects...
+    vector<glm::vec3>* dragonMesh = ReadPLY("./dragon.ply", 100.0f);
+
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            Mesh* mesh = new Mesh(glm::vec3(0,0,0), dragonMesh);    
+            mesh->setLocation(glm::vec3(i,-1,j));
+            scene->add(mesh); 
+        }    
+    }
+        
+    
+    
+    // lighting base
+    /*
+    Sphere* baseLight = new Sphere(glm::vec3(0,0,-5),1);
+    baseLight->material = Material::Emissive(Color(1,0.1f,0.1f,1) * 2.0f);
+    scene->add(baseLight);
+    */
+
+    Cube* baseLight = new Cube(glm::vec3(0,0,-10),glm::vec3(4,2,0.5));
+    baseLight->setMaterial(Material::Emissive(Color(1,0,0,1) * 0.5f));
+    scene->add(baseLight);
+
+    Cube* baseLight2 = new Cube(glm::vec3(0,0,-5),glm::vec3(4,2,0.5));
+    baseLight2->setMaterial(Material::Emissive(Color(0,1,0,1) * 0.25f));
+    scene->add(baseLight2);
+
+    camera.lightingModel = LM_GI;
+    camera.setLocation(glm::vec3(-3.5,2,-7.5));
+    camera.setRotation(glm::vec3(0,4.7,0));
+
+    // blue sky light
+    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
+}
+
+/** Simple scene to test mesh rendering. */
+void initMeshScene()
+{    
+    // default light
+    scene->add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
+	
+    // ground plane
+    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+    plane->material->diffuseColor = Color(0.1f,0.1f,0.1f,1);
+    //plane->material->diffuseTexture = new CheckerboardTexture(2.0f, Color(0.1f,0.1f,0.1f,1), Color(1,1,0.1f,1));    
+    //plane->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);    
+
+    plane->material->reflectivity = 0.25;
+    plane->material->reflectionBlur = 0.1f; // in GI mode specular hilights are handled as blury reflections.
+    scene->add(plane); 
+    
+    // our high res mesh
+    Mesh* mesh = new Mesh(glm::vec3(0,0,0), ReadPLY("./dragon.ply", 20.0f));    
+    mesh->setLocation(glm::vec3(0,-1,-7.5));        
+    scene->add(mesh); 
+    
+    // lighting blocks    
+    Cube* blockLight1 = new Cube(glm::vec3(0,0,-10),glm::vec3(4,2,0.5));
+    blockLight1->setMaterial(Material::Emissive(Color(1,0,0,1) * 0.5f));
+    scene->add(blockLight1);
+
+    Cube* blockLight2 = new Cube(glm::vec3(0,0,-5),glm::vec3(4,2,0.5));
+    blockLight2->setMaterial(Material::Emissive(Color(0,1,0,1) * 0.33f));
+    scene->add(blockLight2);
+    
+    // blue sky light
+    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
+
+    // setup camer aand lighting
+    camera.lightingModel = LM_GI;
+    camera.setLocation(glm::vec3(-3.5,2,-7.5));
+    camera.setRotation(glm::vec3(0,4.7,0));
+    camera.move(-1,0,0);
 }
 
 /**
@@ -364,7 +472,7 @@ void initScene()
 {
     scene = new Scene();
 
-    initGIScene();
+    initMeshScene();
 
     camera.scene = scene;
 }
@@ -388,7 +496,8 @@ int main(int argc, char *argv[]) {
 	glutCreateWindow("RayTracer");
 	initialize();
     glutKeyboardFunc(keyboard);
-	glutDisplayFunc(display);
+    glutSpecialFunc(specialKeyboard);
+	glutDisplayFunc(display);    
 	glutIdleFunc(update);
 	glutMainLoop();
 	return 0;

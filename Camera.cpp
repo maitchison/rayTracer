@@ -75,16 +75,31 @@ void Camera::calculateLighting(RayIntersectionResult intersection, Light* light,
 
 Color Camera::trace(Ray ray, int depth, int giSamples)
 {        
-    RayIntersectionResult intersection = scene->intersect(ray);
+    if (depth > MAX_RECUSION_DEPTH) {
+        lastTraceIntersection = RayIntersectionResult::NoCollision();
+        return Color(0,0,0,1);
+    }
 
+    // stub:
+    
+    RayIntersectionResult intersection = scene->intersect(ray);
+    
     lastTraceIntersection = intersection;
 
     // sepcial lighting models.
     switch (lightingModel) {
-        case LM_UV: return Color(intersection.uv.x, intersection.uv.y, 0,1);        
-        case LM_DEPTH: return Color(intersection.t/100,intersection.t/100,intersection.t/100,1);
-        case LM_WORLD: return Color(intersection.location/100.0f,1.0);
-        case LM_LOCAL: return Color(intersection.local/5.0f,1.0);
+        case LM_UV: 
+            // uv co-ords are not always generated, so generate them here.
+            if (intersection.didCollide()) {
+                intersection.uv = intersection.target->getUV(intersection.local);
+            }
+            return Color(intersection.uv.x, intersection.uv.y, 0.4f, 1);        
+        case LM_DEPTH: 
+            return Color(intersection.t/100,intersection.t/100,intersection.t/100,1);
+        case LM_WORLD: 
+            return Color(intersection.location/30.0f,1.0);
+        case LM_LOCAL: 
+            return Color(intersection.local/5.0f,1.0);
     }    
 
     if (!intersection.didCollide()) return backgroundColor;      //If there is no intersection return background colour
@@ -119,8 +134,11 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
     Color ambientLight = Color(0,0,0,1);
     Color diffuseLight = Color(0,0,0,1);
     Color specularLight = Color(0,0,0,1);
-    for (int i = 0; i < scene->lights.size(); i++) {        
-        calculateLighting(intersection, scene->lights[i], ambientLight, diffuseLight, specularLight);        
+    // we only need to look a the lights in direct lighting mode (ignore them in GI mode.)
+    if (lightingModel == LM_DIRECT) {
+        for (int i = 0; i < scene->lights.size(); i++) {        
+            calculateLighting(intersection, scene->lights[i], ambientLight, diffuseLight, specularLight);        
+        }
     }
 
     // add in global lighting (if required)
@@ -155,7 +173,6 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
             if (randf() > sqrtDiffusePower) continue;                
             diffusePower = sqrtDiffusePower;
             
-
             Ray giRay = Ray(intersection.location + rayDir * 0.01f, rayDir);            
             
             // We then test the color of this ray.  
@@ -300,10 +317,13 @@ int Camera::render(int pixels, bool autoReset)
             gfx.addSample(x+1, y, outputCol, 0.01f + superSample);        
             gfx.addSample(x, y+1, outputCol, 0.01f + superSample);        
             gfx.addSample(x+1, y+1, outputCol, 0.01f + superSample);        
+        } else {
+            // show where we are up to.
+            gfx.putPixel(x, y+1, Color(0,0,0,1), true);            
+            gfx.putPixel(x, y+2, Color(1,1,1,1), true);                
         }
-        gfx.addSample(x, y, outputCol, 0.01f + superSample);        
-        
-        
+
+        gfx.addSample(x, y, outputCol, 0.01f + superSample);                        
         
 		pixelsDone++;
 

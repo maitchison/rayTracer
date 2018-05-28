@@ -10,10 +10,10 @@
 -------------------------------------------------------------*/
 
 #pragma once
+
 #include "Material.h"
 #include "Ray.h"
 #include <glm/glm.hpp>
-
 
 // forwards
 class SceneObject;
@@ -164,7 +164,7 @@ public:
         RayIntersectionResult result = intersectObject(ray);
         if (result.target && result.target->material->needsUV()) {
             // fetch uv only if required.
-            result.uv = result.target->getUV(result.local); 
+            result.uv = result.target->getUV(result.local);
         }
 
         // transform world coords                    
