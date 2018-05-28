@@ -38,6 +38,7 @@ RayIntersectionResult ContainerObject::intersectObject(Ray ray)
             best = result;
         }        
     }
+    if (useContainerMaterial && best.didCollide()) best.target = this;
     return best;
 }
 

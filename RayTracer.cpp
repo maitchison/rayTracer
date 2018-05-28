@@ -215,48 +215,157 @@ void initGIScene()
     camera.backgroundColor = Color(0.03,0.05,0.15,1) * 1.0f;
 }
 
-/** This scene contains 100 meshes each with 800k triangles (that is 80 million trianges).
- * It demsonstrates the efficentcy of the mesh rendering system for high poly counts. */
-void initManyMeshScene()
+/** Generates a parametised material.  types 6+ are textured. */
+Material* parameterisedMaterial(int col, int type)
+{
+    Material* material = new Material();
+
+    // select a base color
+    switch (col % 6) {
+        case 0: material->diffuseColor = Color(0.9f,0.1f,0.1f,1); break;
+        case 1: material->diffuseColor = Color(0.1f,0.9f,0.1f,1); break;
+        case 2: material->diffuseColor = Color(0.3f,0.4f,0.9f,1); break;
+        case 3: material->diffuseColor = Color(0.1f,0.1f,0.1f,1); break;
+        case 4: material->diffuseColor = Color(0.5f,0.5f,0.5f,1); break;
+        case 5: material->diffuseColor = Color(1.0f,1.0f,1.0f,1); break;            
+    }    
+
+    switch (type % 10) {
+        case 0: 
+            // simple colored material            
+            material->shininess = 5;
+            break;
+        case 1: 
+            // transparient colored material
+            material->diffuseColor.a = 0.5f;
+            break;
+        case 2: 
+            // emissive material
+            material->emisiveColor = material->diffuseColor * 0.5f;
+            material->diffuseColor = Color(0.5f,0.5f,0.5f, 1);            
+            break;
+        case 3: 
+            // refractive
+            material->reflectivity = 0.1f;
+            material->refractionIndex = 1.25f;
+            material->diffuseColor *= 0.5f;
+            material->diffuseColor.a = 0.1f;
+            break;
+        case 4: 
+            // reflective
+            material->reflectivity = 0.5f;
+            material->diffuseColor *= 0.5f;
+            material->diffuseColor.a = 1.0f;
+            break;        
+        case 5: 
+            // blured reflection            
+            material->reflectivity = 0.9f;
+            material->reflectionBlur = 0.5f;
+            material->diffuseColor *= 0.1f;
+            material->diffuseColor.a = 1.0f;
+            break;
+        case 6: 
+            // make sure color is not too dark.
+            material->diffuseColor = (material->diffuseColor + Color(1,1,1,1)) / 2.0f;
+            material->diffuseTexture = new CheckerboardTexture();
+            break;
+        case 7: 
+            // make sure color is not too dark.
+            material->diffuseColor = (material->diffuseColor + Color(1,1,1,1)) / 2.0f;         
+            material->diffuseTexture = new MandelbrotTexture();
+            break;
+        case 8:
+            // make sure color is not too dark.
+            material->diffuseColor = (material->diffuseColor + Color(1,1,1,1)) / 2.0f;            
+            material->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
+            material->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);
+            break;
+        case 9:
+            // make sure color is not too dark.
+            material->diffuseColor = (material->diffuseColor + Color(1,1,1,1)) / 2.0f;
+            material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+            material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);    
+            break;
+    }
+    return material;
+}
+
+/** This scene contains 400 spheres demonstrating the material types. */
+void initMaterialSpheres()
 {
     // default light
     scene->add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
 	
     // ground plane
     Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+    plane->material->diffuseTexture = new CheckerboardTexture(4.0f, Color(0.5f,0.5f,0.5f,1), Color(0.1,0.1,0.1,1));
+    plane->material->reflectivity = 0.1f;
+    scene->add(plane); 
+        
+    const int NUM_OBJECTS_X = 20;
+    const int NUM_OBJECTS_Y = 20;
+    
+    // create spheres
+    for (int i = 0; i < NUM_OBJECTS_X; i++) {
+        for (int j = 0; j < NUM_OBJECTS_Y; j++) {
+            Sphere* sphere = new Sphere(glm::vec3((i-(NUM_OBJECTS_X/2))*2,0.5f,(j-(NUM_OBJECTS_Y/2))*2),0.5f);            
+            sphere->material = parameterisedMaterial(2+j,2+i+j);            
+            sphere->setRotation(glm::vec3(randf(),randf(),randf())); // for texture spheres.
+            scene->add(sphere); 
+        }    
+    }
+                
+    camera.lightingModel = LM_DIRECT;
+    camera.setLocation(glm::vec3(0,2,12));
+    camera.setRotation(glm::vec3(-0.6,0,0));
+    camera.move(-6,0,0);
+
+    // blue sky light
+    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
+}
+
+ 
+/** This scene contains 100 dragons each with 800k triangles (that is 80 million trianges).
+ * It demsonstrates the efficentcy of the mesh rendering system for high poly counts. */
+void init100Dragons()
+{
+    // default light
+    scene->add(new Light(glm::vec3(-10,30,0), Color(1,1,1,1)));    
+	
+    // ground plane
+    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+    //plane->material->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
+    //plane->material->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);    
+    //plane->material->diffuseTexture = new CheckerboardTexture(2.0f);
     scene->add(plane); 
 
     // mesh objects...
-    vector<glm::vec3>* dragonMesh = ReadPLY("./dragon.ply", 100.0f);
+    vector<glm::vec3>* dragonMesh = ReadPLY("./dragon.ply", 10.0f);
 
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            Mesh* mesh = new Mesh(glm::vec3(0,0,0), dragonMesh);    
-            mesh->setLocation(glm::vec3(i,-1,j));
-            scene->add(mesh); 
+    // base dragon
+    Mesh* dragon = new Mesh(glm::vec3(0,0,0), dragonMesh);    
+    //Sphere* dragon = new Sphere(glm::vec3(0,1.0,0),0.5); 
+    //Cube* dragon = new Cube(glm::vec3(0,1,0),glm::vec3(0.5)); 
+
+    const int NUM_OBJECTS_X = 10;
+    const int NUM_OBJECTS_Y = 10;
+    
+    // duplicate dragons
+    for (int i = 0; i < NUM_OBJECTS_X; i++) {
+        for (int j = 0; j < NUM_OBJECTS_Y; j++) {
+            // rather than creating new dragons (which would repartition them and load the mesh into memory again)
+            // we can instead create copies of them with the ReferenceObject type.  This allows for a copy of 
+            // the origional object, but with a new transform applied.
+            ReferenceObject* dragonCopy = new ReferenceObject(glm::vec3((i-(NUM_OBJECTS_X/2))*2,-0.5,(j-(NUM_OBJECTS_Y/2))*2), dragon);
+            dragonCopy->setRotation(glm::vec3(0, (randf()-0.5f)*PI*0.1f + (0.4f*PI), 0));
+            dragonCopy->material = parameterisedMaterial(j,i);            
+            scene->add(dragonCopy); 
         }    
     }
-        
-    
-    
-    // lighting base
-    /*
-    Sphere* baseLight = new Sphere(glm::vec3(0,0,-5),1);
-    baseLight->material = Material::Emissive(Color(1,0.1f,0.1f,1) * 2.0f);
-    scene->add(baseLight);
-    */
-
-    Cube* baseLight = new Cube(glm::vec3(0,0,-10),glm::vec3(4,2,0.5));
-    baseLight->setMaterial(Material::Emissive(Color(1,0,0,1) * 0.5f));
-    scene->add(baseLight);
-
-    Cube* baseLight2 = new Cube(glm::vec3(0,0,-5),glm::vec3(4,2,0.5));
-    baseLight2->setMaterial(Material::Emissive(Color(0,1,0,1) * 0.25f));
-    scene->add(baseLight2);
-
-    camera.lightingModel = LM_GI;
-    camera.setLocation(glm::vec3(-3.5,2,-7.5));
-    camera.setRotation(glm::vec3(0,4.7,0));
+                
+    camera.lightingModel = LM_DIRECT;
+    camera.setLocation(glm::vec3(0,3,12));
+    camera.setRotation(glm::vec3(-0.5,0,0));
 
     // blue sky light
     camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
@@ -270,9 +379,7 @@ void initMeshScene()
 	
     // ground plane
     Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-    plane->material->diffuseColor = Color(0.1f,0.1f,0.1f,1);
-    //plane->material->diffuseTexture = new CheckerboardTexture(2.0f, Color(0.1f,0.1f,0.1f,1), Color(1,1,0.1f,1));    
-    //plane->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);    
+    plane->material->diffuseColor = Color(0.3f,0.3f,0.3f,1);
 
     plane->material->reflectivity = 0.25;
     plane->material->reflectionBlur = 0.1f; // in GI mode specular hilights are handled as blury reflections.
@@ -295,7 +402,7 @@ void initMeshScene()
     // blue sky light
     camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
 
-    // setup camer aand lighting
+    // setup camera and lighting
     camera.lightingModel = LM_GI;
     camera.setLocation(glm::vec3(-3.5,2,-7.5));
     camera.setRotation(glm::vec3(0,4.7,0));
@@ -472,7 +579,7 @@ void initScene()
 {
     scene = new Scene();
 
-    initMeshScene();
+    initMaterialSpheres();
 
     camera.scene = scene;
 }

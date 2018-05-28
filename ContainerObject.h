@@ -13,6 +13,24 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+/** A copy of another object, but with an additional transform layer and a different material. */
+class ReferenceObject : public SceneObject
+{
+protected:
+    SceneObject* reference;
+public:
+    ReferenceObject(glm::vec3 location, SceneObject* reference) : SceneObject(location)
+    {
+        this->reference = reference;        
+    }
+
+    RayIntersectionResult intersectObject(Ray ray) {
+        RayIntersectionResult result = this->reference->intersect(ray);
+        if (result.didCollide()) result.target = this;
+        return result;
+    }
+};
+
 class ContainerObject : public SceneObject
 {
 protected:
@@ -25,6 +43,7 @@ public:
     }
 
     bool showBounds = false;
+    bool useContainerMaterial = false;
 
     /** Adds object to container. */
     virtual void add(SceneObject* object);

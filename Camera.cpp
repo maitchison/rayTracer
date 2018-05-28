@@ -245,8 +245,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
                 Color refractedCol = trace(exitRay, depth+1, giSamples); 
                 color += (1.0f-materialColor.a)*refractedCol;
             } else {
-                // this case shouldn't happen, but might due to rounding... just ignore (i.e. use black color)
-                color = Color(1,0,1,1);
+                // this case shouldn't happen, but might due to rounding... just ignore                 
             }
         }
     }

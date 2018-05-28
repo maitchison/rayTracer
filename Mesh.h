@@ -172,6 +172,7 @@ public:
 
     /** Creates mesh from vertices.  Every triad of vertices is interpreted as a triangle. */
     Mesh(glm::vec3 location, std::vector<glm::vec3>* vertices) : ContainerObject(location) {
+        useContainerMaterial = true;
         setMesh(vertices);                
     }    
 

@@ -38,28 +38,12 @@ Feature list:
 [*] sample buffer
 [*] ply mesh loader
 [*] mesh rendering (with fast subdivision)
-
-Maybe do in the future?
+[*] F1-F7 control lighting model.
+[*] Scene: dragon
 
 Todo:
 
-
-[ ] rendermodes:
-    - norm quick render
-    - 1 to slow render
-    - 2 to GI render
-
-[ ] shortcut keys for effects
-    - show bounding spheres
-
-[ ] tidy up code style
-
-[ ] seperate out the lighting model from the trace
-
-Code clean up
-[ ] headers on all files
-[ ] maybe use VS to fixup formatting.
-
+[*] Scene: many dragons
 
 Bugs:
 [fixed] shadows look wrong          <- yes, fixed, was only checking up to 1 unit away...

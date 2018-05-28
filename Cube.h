@@ -19,6 +19,8 @@ public:
     /** Creates a unit cube */
     Cube(glm::vec3 location, glm::vec3 scale = glm::vec3(1,1,1)) : ContainerObject(location) {
 
+        useContainerMaterial = true;
+
         float w = scale.x/2.0f;
         float h = scale.y/2.0f;
         float d = scale.z/2.0f;

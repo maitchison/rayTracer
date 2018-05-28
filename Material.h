@@ -90,7 +90,7 @@ public:
     static Material* Emissive(glm::vec4 color = glm::vec4(1,1,1,1))
     {
         Material* material = new Material();
-        material->diffuseColor = Color(0,0,0,1);
+        material->diffuseColor = Color(0.5f,0.5f,0.5f,1);
         material->emisiveColor = color;
         return material;
     }
