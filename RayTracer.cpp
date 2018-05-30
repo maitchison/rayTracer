@@ -23,12 +23,17 @@
 #include "Light.h"
 #include "Mesh.h"
 
+#include "ExampleScenes.h"
+
 #include "Camera.h"
 #include "GFX.h"
 #include "PLYReader.h"
 
+#include <sstream>
+
 #include "math.h"
 #include <GL/glut.h>
+
 using namespace std;
 
 //----------------------------------
@@ -37,16 +42,21 @@ using namespace std;
 
 float currentTime = 0.00;
 
-// Global list of scene objects.
-Scene* scene;
+// Reference to the current scene
+Scene* currentScene;
 
-// Main camera
-Camera camera;
+// Reference to current camera
+Camera* camera;
+
+// list of scenes we can switch between.
+vector<Scene*> scenes = vector<Scene*>();
 
 // --------------------------------
 
 bool DOUBLE_RENDER = true;
 bool AUTO_RENDER = true;
+
+enum RUN_MODE {RM_MANUAL, RM_RENDER_AND_EXIT};
 
 const int LQ_RAYS = 0;
 const int HQ_RAYS = 1;
@@ -55,38 +65,57 @@ const int RM_NONE = 0;
 const int RM_LQ = 1;
 const int RM_HQ = 2;
 
+RUN_MODE mode = RM_MANUAL;
+
 // --------------------------------
 
 float lastFrameTime = 0.0f;
 int counter = 0;
 int frameOn = 0;
 
-
 int render_mode = RM_LQ;
-
-// if assigned this object will animate.
-SceneObject* animatedObject = NULL;
+int initialScene = 0;
 
 // --------------------------------
+
+/** Activates given scene. */
+void activateScene(int sceneNumber) 
+{
+    if (sceneNumber < 0 || sceneNumber >= scenes.size()) {
+        printf("Invalid scene number %d", sceneNumber);
+        return;
+    }
+
+    printf("Activating scene %d.\n", sceneNumber);
+    
+    currentScene = scenes[sceneNumber];
+    if (!currentScene->isLoaded()) {
+        currentScene->load();
+    }
+    camera = currentScene->camera;
+
+    // stick to quick updates in animated mode.
+    DOUBLE_RENDER = !currentScene->isAnimated;
+}
 
 /** Forces camera redraw. */
 void redraw()
 {
     render_mode = RM_LQ;
-    camera.reset();
+    camera->reset();
     gfx.clear();
 }
 
 void specialKeyboard(int key, int x, int y)
 {
     switch (key) {
-        case GLUT_KEY_F1: camera.lightingModel = LM_DIRECT; break;
-        case GLUT_KEY_F2: camera.lightingModel = LM_GI; break;    
-        case GLUT_KEY_F3: camera.lightingModel = LM_DEPTH; break;    
-        case GLUT_KEY_F4: camera.lightingModel = LM_WORLD; break;    
-        case GLUT_KEY_F5: camera.lightingModel = LM_LOCAL; break;    
-        case GLUT_KEY_F6: camera.lightingModel = LM_NORMAL; break;    
-        case GLUT_KEY_F7: camera.lightingModel = LM_UV; break;    
+        case GLUT_KEY_F1: camera->lightingModel = LM_DIRECT; break;
+        case GLUT_KEY_F2: camera->lightingModel = LM_GI; break;    
+        case GLUT_KEY_F3: camera->lightingModel = LM_DEPTH; break;    
+        case GLUT_KEY_F4: camera->lightingModel = LM_WORLD; break;    
+        case GLUT_KEY_F5: camera->lightingModel = LM_LOCAL; break;    
+        case GLUT_KEY_F6: camera->lightingModel = LM_NORMAL; break;    
+        case GLUT_KEY_F7: camera->lightingModel = LM_UV; break;    
     }
     redraw();
 }
@@ -94,29 +123,39 @@ void specialKeyboard(int key, int x, int y)
 void keyboard(unsigned char key, int x, int y)
 {    
     switch (key) {
-        case 'w': camera.move(+3,0); break;
-        case 's': camera.move(-3,0); break;
-        case 'a': camera.move(0, -3); break;
-        case 'd': camera.move(0, +3); break;
-        case 'z': camera.move(0, 0, +1); break;
-        case 'c': camera.move(0, 0, -1); break;
-        case 'q': camera.rotate(+0.1f,0); break;
-        case 'e': camera.rotate(-0.1f,0); break;
-        case ' ': break; // force render        
+        case '0': activateScene(0); break;
+        case '1': activateScene(1); break;
+        case '2': activateScene(2); break; 
+        case '3': activateScene(3); break;
+        case '4': activateScene(4); break;
+        case '5': activateScene(5); break;
+        case '6': activateScene(6); break;
+        case '7': activateScene(7); break;
+        case '8': activateScene(8); break;
+        case 'w': camera->move(+3,0); break;
+        case 's': camera->move(-3,0); break;
+        case 'a': camera->move(0, -3); break;
+        case 'd': camera->move(0, +3); break;
+        case 'z': camera->move(0, 0, +1); break;
+        case 'c': camera->move(0, 0, -1); break;
+        case 'q': camera->rotate(+0.1f,0); break;
+        case 'e': camera->rotate(-0.1f,0); break;
+        case ' ': 
+            // force render, but also print locaiton.
+            printf("Camera at:");
+            print(camera->getLocation());
+            printf("Camera rotation:");
+            print(camera->getRotation());        
+            break; 
         default:
             // skip the redraw
             return;
-    }
-
-    printf("Camera at:");
-    print(camera.getLocation());
-    printf("Camera rotation:");
-    print(camera.getRotation());
+    }    
     
     if (AUTO_RENDER) {
         // auto render draws all the time, but camera needs reseting on movement
         gfx.clear(Color(0,0,0,0),true);
-        camera.reset();
+        camera->reset();
         render_mode = RM_LQ;
     } else {
         // redraw when changes are made.
@@ -126,40 +165,44 @@ void keyboard(unsigned char key, int x, int y)
 
 void update(void)
 {    
+
+    // this shouldn't happen, but just in case.
+    if (currentScene == NULL || camera == NULL)
+        return;
+
     currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;	
 	float elapsed = currentTime - lastFrameTime;
 
 	if (elapsed < (0.5 / 1000.0)) {
 		return;
 	}
-
-    if (animatedObject) {        
-        animatedObject->setRotation(animatedObject->getRotation() + 0.001f * glm::vec3(2,1,0));
-    }
-
+    
 	clock_t t;
 	t = clock();
 	int pixelsRendered = 0;
 	switch (render_mode) {
 		case RM_LQ:
-            camera.superSample = LQ_RAYS;
-            camera.GI_SAMPLES = 4; // super quick render...
-            camera.lqMode = true;
-			pixelsRendered = camera.render(5 * 1000, false);
+            camera->superSample = LQ_RAYS;
+            camera->GI_SAMPLES = 4; // super quick render...
+            camera->lqMode = true;
+			pixelsRendered = camera->render(currentScene, 5 * 1000, false);
 			if (pixelsRendered == 0) {
+                // update on frame finish.
+                currentScene->update();
                 if (DOUBLE_RENDER) {                    
 				    render_mode = RM_HQ;
-				    camera.reset();
+				    camera->reset();
                 } else if (AUTO_RENDER) {
-                    camera.reset();
+                    camera->reset();
+                    gfx.clear(Color(0,0,0,0), true);
                 }
 			}
 			break;
 		case RM_HQ:
-            camera.superSample = HQ_RAYS;
-            camera.GI_SAMPLES = 64;
-            camera.lqMode = false;
-			pixelsRendered = camera.render(5 * 100, true);
+            camera->superSample = HQ_RAYS;
+            camera->GI_SAMPLES = 64;
+            camera->lqMode = false;
+			pixelsRendered = camera->render(currentScene, 5 * 100, true);
 			if (pixelsRendered == 0) {
 				render_mode = RM_NONE;
 			}
@@ -178,454 +221,6 @@ void update(void)
 	lastFrameTime = currentTime;
 }
 
-/** Simple scene to test GI. */
-void initGIScene()
-{    
-    //scene->add(new Light(glm::vec3(-10,30,0), Color(1,1,1,1)));
-	//-- Create a pointer to a sphere object
-	Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
-    Sphere* sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -30.0), 4.0);
-    Sphere* sphere3 = new Sphere(glm::vec3(-16.0, +8.0, -20.0), 4.0);
-
-    Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-
-    sphere1->material = Material::Default(Color(1,1,1,1));
-    sphere2->material = Material::Checkerboard();
-    sphere3->material = Material::Default(Color(0,1,0,1));    
-    plane->material = Material::Checkerboard(1.0f);
-    
-    plane->material->reflectivity = 0.5f;
-    plane->material->reflectionBlur = 0.01f;
-
-    sphere3->material->emisiveColor = Color(1,0.2f,0.9f,1)*1.0f;
-    sphere2->material->emisiveColor = Color(1,0.75f,0,1)*0.5f;
-    
-	//--Add the above to the list of scene objects.
-	scene->add(plane); 
-    scene->add(sphere1);     
-    scene->add(sphere2); 
-    scene->add(sphere3);     
-
-    // origin marker
-    scene->add(new Sphere(glm::vec3(0,-20,0),3.0f));
-
-    camera.lightingModel = LM_GI;    
-
-    // blue sky light
-    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 1.0f;
-}
-
-/** Generates a parametised material.  types 6+ are textured. */
-Material* parameterisedMaterial(int col, int type)
-{
-    Material* material = new Material();
-
-    // select a base color
-    switch (col % 6) {
-        case 0: material->diffuseColor = Color(0.9f,0.1f,0.1f,1); break;
-        case 1: material->diffuseColor = Color(0.1f,0.9f,0.1f,1); break;
-        case 2: material->diffuseColor = Color(0.3f,0.4f,0.9f,1); break;
-        case 3: material->diffuseColor = Color(0.1f,0.1f,0.1f,1); break;
-        case 4: material->diffuseColor = Color(0.5f,0.5f,0.5f,1); break;
-        case 5: material->diffuseColor = Color(1.0f,1.0f,1.0f,1); break;            
-    }    
-
-    switch (type % 10) {
-        case 0: 
-            // simple colored material            
-            material->shininess = 5;
-            break;
-        case 1: 
-            // transparient colored material
-            material->diffuseColor.a = 0.5f;
-            break;
-        case 2: 
-            // emissive material
-            material->emisiveColor = material->diffuseColor * 0.5f;
-            material->diffuseColor = Color(0.5f,0.5f,0.5f, 1);            
-            break;
-        case 3: 
-            // refractive
-            material->reflectivity = 0.1f;
-            material->refractionIndex = 1.25f;
-            material->diffuseColor *= 0.5f;
-            material->diffuseColor.a = 0.1f;
-            break;
-        case 4: 
-            // reflective
-            material->reflectivity = 0.5f;
-            material->diffuseColor *= 0.5f;
-            material->diffuseColor.a = 1.0f;
-            break;        
-        case 5: 
-            // blured reflection            
-            material->reflectivity = 0.9f;
-            material->reflectionBlur = 0.5f;
-            material->diffuseColor *= 0.1f;
-            material->diffuseColor.a = 1.0f;
-            break;
-        case 6: 
-            // make sure color is not too dark.
-            material->diffuseColor = (material->diffuseColor + Color(1,1,1,1)) / 2.0f;
-            material->diffuseTexture = new CheckerboardTexture();
-            break;
-        case 7: 
-            // make sure color is not too dark.
-            material->diffuseColor = (material->diffuseColor + Color(1,1,1,1)) / 2.0f;         
-            material->diffuseTexture = new MandelbrotTexture();
-            break;
-        case 8:
-            // make sure color is not too dark.
-            material->diffuseColor = (material->diffuseColor + Color(1,1,1,1)) / 2.0f;            
-            material->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
-            material->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);
-            break;
-        case 9:
-            // make sure color is not too dark.
-            material->diffuseColor = (material->diffuseColor + Color(1,1,1,1)) / 2.0f;
-            material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
-            material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);    
-            break;
-    }
-    return material;
-}
-
-/** Demonistrates some of the texture sampling */
-void initTextureSampling()
-{
-    // default light
-    Light* light = new Light(glm::vec3(0,2,-15), Color(1,1,1,1));
-    light->lightSize = 1.0f;
-    scene->add(light);  
-
-    // some pillars
-    Cube* cube;
-    for (int i = 0; i < 10; i++) {
-        cube = new Cube(glm::vec3(-10+(i*2),0,-10), glm::vec3(0.7,10,0.7));
-        if (i == 7) {
-            cube->material->emisiveColor = 5.0f * Color(1.0f,0.5f,0,1);
-        }
-        scene->add(cube);
-    }
-
-    // a sphere
-    scene->add(new Sphere(glm::vec3(0,2,0), 1.0f));
-    
-    // ground plane
-    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-    //plane->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
-    //plane->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);    
-    plane->material->diffuseColor = Color(0.7,0.7,0.7,1.0);
-    plane->material->reflectivity = 0.2f;
-    plane->material->shininess = 50;
-    scene->add(plane); 
-
-    camera.setLocation(glm::vec3(-9.2,3.0,2));
-    camera.setRotation(glm::vec3(0,-0.6,0));    
-
-    // blue sky light
-    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.1f;
-    
-}
-
-
-/** This scene contains 400 spheres demonstrating the material types. */
-void initMaterialSpheres()
-{
-    // default light
-    Light* light = new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1));
-    scene->add(light);  
-    
-    // ground plane
-    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-    plane->material->diffuseTexture = new CheckerboardTexture(4.0f, Color(0.5f,0.5f,0.5f,1), Color(0.1,0.1,0.1,1));
-    plane->material->reflectivity = 0.1f;
-    scene->add(plane); 
-
-  
-        
-    const int NUM_OBJECTS_X = 20;
-    const int NUM_OBJECTS_Y = 20;
-    
-    // create spheres
-    for (int i = 0; i < NUM_OBJECTS_X; i++) {
-        for (int j = 0; j < NUM_OBJECTS_Y; j++) {
-            Sphere* sphere = new Sphere(glm::vec3((i-(NUM_OBJECTS_X/2))*2,0.5f,(j-(NUM_OBJECTS_Y/2))*2),0.5f);            
-            sphere->material = parameterisedMaterial(2+j,2+i+j);            
-            sphere->setRotation(glm::vec3(randf(),randf(),randf())); // for texture spheres.
-            scene->add(sphere); 
-        }    
-    }
-                
-    camera.lightingModel = LM_DIRECT;
-    camera.setLocation(glm::vec3(0,2,12));
-    camera.setRotation(glm::vec3(-0.6,0,0));
-    camera.move(-6,0,0);
-
-    // blue sky light
-    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
-}
-
- 
-/** This scene contains 100 dragons each with 800k triangles (that is 80 million trianges).
- * It demsonstrates the efficentcy of the mesh rendering system for high poly counts. */
-void init100Dragons()
-{
-    // default light
-    scene->add(new Light(glm::vec3(-10,30,0), Color(1,1,1,1)));    
-	
-    // ground plane
-    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-    //plane->material->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
-    //plane->material->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);    
-    //plane->material->diffuseTexture = new CheckerboardTexture(2.0f);
-    scene->add(plane); 
-
-    // mesh objects...
-    vector<glm::vec3>* dragonMesh = ReadPLY("./dragon.ply", 10.0f);
-
-    // base dragon
-    Mesh* dragon = new Mesh(glm::vec3(0,0,0), dragonMesh);    
-    //Sphere* dragon = new Sphere(glm::vec3(0,1.0,0),0.5); 
-    //Cube* dragon = new Cube(glm::vec3(0,1,0),glm::vec3(0.5)); 
-
-    const int NUM_OBJECTS_X = 10;
-    const int NUM_OBJECTS_Y = 10;
-    
-    // duplicate dragons
-    for (int i = 0; i < NUM_OBJECTS_X; i++) {
-        for (int j = 0; j < NUM_OBJECTS_Y; j++) {
-            // rather than creating new dragons (which would repartition them and load the mesh into memory again)
-            // we can instead create copies of them with the ReferenceObject type.  This allows for a copy of 
-            // the origional object, but with a new transform applied.
-            ReferenceObject* dragonCopy = new ReferenceObject(glm::vec3((i-(NUM_OBJECTS_X/2))*2,-0.5,(j-(NUM_OBJECTS_Y/2))*2), dragon);
-            dragonCopy->setRotation(glm::vec3(0, (randf()-0.5f)*PI*0.1f + (0.4f*PI), 0));
-            dragonCopy->material = parameterisedMaterial(j,i);            
-            scene->add(dragonCopy); 
-        }    
-    }
-                
-    camera.lightingModel = LM_DIRECT;
-    camera.setLocation(glm::vec3(0,3,12));
-    camera.setRotation(glm::vec3(-0.5,0,0));
-
-    // blue sky light
-    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
-}
-
-/** Simple scene to test mesh rendering. */
-void initMeshScene()
-{    
-    // default light
-    scene->add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
-	
-    // ground plane
-    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-    plane->material->diffuseColor = Color(0.3f,0.3f,0.3f,1);
-
-    plane->material->reflectivity = 0.25;
-    plane->material->reflectionBlur = 0.1f; // in GI mode specular hilights are handled as blury reflections.
-    scene->add(plane); 
-    
-    // our high res mesh
-    Mesh* mesh = new Mesh(glm::vec3(0,0,0), ReadPLY("./dragon.ply", 20.0f));    
-    mesh->setLocation(glm::vec3(0,-1,-7.5));        
-    scene->add(mesh); 
-    
-    // lighting blocks    
-    Cube* blockLight1 = new Cube(glm::vec3(0,0,-10),glm::vec3(4,2,0.5));
-    blockLight1->setMaterial(Material::Emissive(Color(1,0,0,1) * 0.5f));
-    scene->add(blockLight1);
-
-    Cube* blockLight2 = new Cube(glm::vec3(0,0,-5),glm::vec3(4,2,0.5));
-    blockLight2->setMaterial(Material::Emissive(Color(0,1,0,1) * 0.33f));
-    scene->add(blockLight2);
-    
-    // blue sky light
-    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
-
-    // setup camera and lighting
-    camera.lightingModel = LM_GI;
-    camera.setLocation(glm::vec3(-3.5,2,-7.5));
-    camera.setRotation(glm::vec3(0,4.7,0));
-    camera.move(-1,0,0);
-}
-
-/**
- * A simple scene to test the raytracer 
- */
-void initTestScene()
-{
-
-    // lights
-    scene->add(new Light(glm::vec3(-10,30,0), Color(1,0.2,0.2,1)));
-    // lights
-    scene->add(new Light(glm::vec3(+10,30,0), Color(0.2,1,0.2,1)));
-    
-	//-- Create a pointer to a sphere object
-	Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
-    Sphere* sphere2 = new Sphere(glm::vec3(+4.0, +3.0, -30.0), 4.0);
-    Sphere* sphere3 = new Sphere(glm::vec3(+8.0, -8.0, -20.0), 4.0);
-
-    Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-
-    sphere1->material = Material::Default(Color(1,1,1,0.1));
-    sphere2->material = Material::Checkerboard();
-    sphere3->material = Material::Reflective(Color(0,1,0,1));
-    sphere3->material->reflectionBlur = 0.3f;
-    plane->material = Material::Checkerboard(1.0f);
-    
-	//--Add the above to the list of scene objects.
-	scene->add(plane); 
-    scene->add(sphere1);     
-    scene->add(sphere2); 
-    scene->add(sphere3);     
-
-    // origin marker
-    scene->add(new Sphere(glm::vec3(0,-20,0),3.0f));
-}
-
-
-/** Mostly to test the transforms. */
-void initAnimatedScene() 
-{
-    // lights
-    scene->add(new Light(glm::vec3(-10,30,0), Color(1,0.5,0.5,1)));
-    scene->add(new Light(glm::vec3(+10,30,0), Color(0.5,1,0.5,1)));
-    scene->add(new Light(glm::vec3(0,30,0), Color(0.5,0.5,1,1)));
-    	
-    Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-    scene->add(plane); 
-    
-    /*
-    Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
-    scene->add(sphere1); 
-    */
-        
-    SceneObject* box = new Cube(glm::vec3(0,0,-50), glm::vec3(10,10,10));    
-
-    //SceneObject* box = new Sphere(glm::vec3(0,0,-50), 15);    
-    
-    /*
-    SceneObject* box = new Plane(
-            glm::vec3(-20,-20,0), 
-            glm::vec3(+20,-20,0), 
-            glm::vec3(+20,+20,0),
-            glm::vec3(-20,+20,0));
-    */  
-
-    animatedObject = box;
-    scene->add(box);    
-
-    plane->material = Material::Checkerboard(1.0f);
-	
-    // origin marker
-    scene->add(new Sphere(glm::vec3(0,-20,0),3.0f));
-}
-
-/**
- * This is a standard cornell box (https://en.wikipedia.org/wiki/Cornell_box) with some additional objects to demonstrate
- * the raytracers capabilities and meet assignment requirements. 
- * */
-void initCornellScene()
-{
-    // lights
-    scene->add(new Light(glm::vec3(0,30,0)));
-
-    // infinite planes are a little faster than clipped planes and won't have potential artifacts at the edges.
-    Plane* leftPlane = new Plane(glm::vec3(-40,0,0), glm::vec3(1,0,0));
-    Plane* rightPlane = new Plane(glm::vec3(+40,0,0), glm::vec3(-1,0,0));
-    Plane* backPlane = new Plane(glm::vec3(0,0,-80), glm::vec3(0,0,1));
-    Plane* forePlane = new Plane(glm::vec3(0,0,20), glm::vec3(0,0,-1));
-    Plane* floorPlane = new Plane(glm::vec3(0,40,0), glm::vec3(0,-1,0));
-    Plane* ceilingPlane = new Plane(glm::vec3(0,-40,0), glm::vec3(0,1,0));
-
-    // make the colors a little pastal.
-    leftPlane->material = Material::Default(Color(0.9,0.1,0.1,1.0));
-    rightPlane->material = Material::Default(Color(0.1,0.9,0.1,1.0));
-    backPlane->material = forePlane->material = floorPlane->material = ceilingPlane->material = Material::Default(Color(0.9,0.9,0.9,1.0));
-
-    // reflective blury sphere
-    Sphere* sphere = new Sphere(glm::vec3(0,-20,-70), 10.0f);
-    sphere->material = Material::Reflective(glm::vec4(0.1f,0.1f,0.1f,1.0f), 0.8f);
-
-    // a framed mandelbrot picture in the background
-
-    Cube* pictureFrame = new Cube(glm::vec3(0,0,-80), glm::vec3(50,50,10));    
-    Cube* picture = new Cube(glm::vec3(0,0,-79), glm::vec3(45,45,10));
-
-    Material* woodMaterial = new Material();
-    woodMaterial->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
-    woodMaterial->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);
-    pictureFrame->setMaterial(woodMaterial);
-    
-    Material* pictureMaterial = new Material();
-    pictureMaterial->diffuseTexture = new MandelbrotTexture();
-    // todo: might be nice to add some ruff normal texture (such as canvas) to this.    
-    picture->setMaterial(pictureMaterial);
-
-    // create pedestals with object ontop.
-    glm::vec3 pos;
-    Cube* petastool;
-    SceneObject* object;
-    
-    // note this would work better with grouped objects and object transforms... 
-
-    // 1> refractive:
-    pos = glm::vec3(-30,-40,-50);
-    petastool = new Cube(pos, glm::vec3(10,10,10));
-    object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
-    object->material = Material::Refractive(Color(0.5,0.1,0.1,0.1));
-    scene->add(petastool);
-    scene->add(object);
-    
-    // 2> transparient:
-    pos = glm::vec3(-10,-40,-50);
-    petastool = new Cube(pos, glm::vec3(10,10,10));
-    object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
-    object->material = Material::Default(Color(0.1,0.5,0.1,0.1));
-    scene->add(petastool);
-    scene->add(object);
-
-    // 3> textured:
-    pos = glm::vec3(+10,-40,-50);
-    petastool = new Cube(pos, glm::vec3(10,10,10));
-    object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
-    object->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
-    object->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);
-    scene->add(petastool);
-    scene->add(object);    
-
-    // 4> standard:
-    pos = glm::vec3(+30,-40,-50);
-    petastool = new Cube(pos, glm::vec3(10,10,10));
-    object = new Sphere(pos + glm::vec3(0,10,0), 5.0f);
-    object->material = Material::Default(Color(0.1f,0.1f,0.6f,1.0f));
-    scene->add(petastool);
-    scene->add(object);
-        
-    scene->add(leftPlane);
-    scene->add(rightPlane);
-    scene->add(backPlane);
-    scene->add(floorPlane);
-    scene->add(ceilingPlane);
-    scene->add(forePlane);
-
-    scene->add(pictureFrame);
-    scene->add(picture);
-
-    scene->add(sphere);
-}
-
-void initScene()
-{
-    scene = new Scene();
-
-    initTextureSampling();
-
-    camera.scene = scene;
-}
-
 void display(void)
 {
 	gfx.blit();
@@ -633,11 +228,44 @@ void display(void)
 
 void initialize()
 {
+    printf("Initializing graphics library.\n");
     gfx.init();
-    initScene();    
+
+    printf("Loading scenes.\n");
+    
+    scenes.push_back(new TestScene()); // this is realy just here to pad out scene '0'.
+    scenes.push_back(new GIScene());        
+    scenes.push_back(new CornellBoxScene());        
+    scenes.push_back(new AnimatedScene());        
+    scenes.push_back(new MaterialSpheresScene());        
+    scenes.push_back(new DragonScene());        
+    scenes.push_back(new ManyDragonsScene());        
+    scenes.push_back(new AreaLightScene());        
+    
+    activateScene(initialScene);
+
 }
 
 int main(int argc, char *argv[]) {
+
+    switch (argc) {
+        case 1: 
+            // standard            
+            break;
+        case 2: 
+            // render and exit
+            istringstream ss(argv[1]);
+            int sceneNumber;
+            if (!(ss >> sceneNumber)) {
+                cerr << "Invalid input " << argv[1] << ", please use an integer [0..6].\n";
+                return -1;
+            }
+            printf("Auto rendering scene %d to file and exiting.\n", sceneNumber);
+            mode = RM_MANUAL;
+            initialScene = sceneNumber;
+            break;
+    }
+
     glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_DEPTH);
 	glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);

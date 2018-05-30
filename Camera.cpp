@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "Scene.h"
 
 // a small offset is applied to reflected rays / shadow rays so they don't self interesect.
 const float OFFSET_BIAS = 0.001f;
@@ -8,7 +9,7 @@ Camera::Camera(glm::vec3 location) : SceneObject(location)
 }
 
 
-void Camera::calculateLighting(RayIntersectionResult intersection, Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum)
+void Camera::calculateLighting(RayIntersectionResult intersection, ContainerObject* scene, Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum)
 {
     Material* material = intersection.target->material;
 
@@ -78,7 +79,7 @@ void Camera::calculateLighting(RayIntersectionResult intersection, Light* light,
     specularLightSum += specularLight * light->color;
 }
 
-Color Camera::trace(Ray ray, int depth, int giSamples)
+Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
 {        
     if (depth > MAX_RECUSION_DEPTH) {
         lastTraceIntersection = RayIntersectionResult::NoCollision();
@@ -140,7 +141,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
     // we only need to look a the lights in direct lighting mode (ignore them in GI mode.)
     if (lightingModel == LM_DIRECT) {
         for (int i = 0; i < scene->lights.size(); i++) {        
-            calculateLighting(intersection, scene->lights[i], ambientLight, diffuseLight, specularLight);        
+            calculateLighting(intersection, scene, scene->lights[i], ambientLight, diffuseLight, specularLight);        
         }
     }
 
@@ -180,7 +181,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
             
             // We then test the color of this ray.  
             // We set giSamples to 1 if gi was enabled, and 0 otherwise, this gives a 2 bounce lighting model.            
-            Color sampleRadiance = trace(giRay, depth+1, giSamples > 1 ? 1 : 0);             
+            Color sampleRadiance = trace(giRay, scene, depth+1, giSamples > 1 ? 1 : 0);             
 
             if (sampleRadiance.r != sampleRadiance.r) {
                 printf("Hmm, radiance is nan?\n");
@@ -214,7 +215,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
         }
 
         Ray reflectedRay(intersection.location + reflectedDir * OFFSET_BIAS, reflectedDir);
-        Color reflectedCol = trace(reflectedRay, depth+1, giSamples); 
+        Color reflectedCol = trace(reflectedRay, scene, depth+1, giSamples); 
         color += (material->reflectivity*reflectedCol);        
     }
 
@@ -226,7 +227,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
     
             // start the ray a little further on from where we hit.
             Ray transmittedRay = Ray(intersection.location + OFFSET_BIAS * ray.dir, ray.dir);
-            Color transmittedCol = trace(transmittedRay, depth, giSamples); 
+            Color transmittedCol = trace(transmittedRay, scene, depth, giSamples); 
             color += (1.0f-materialColor.a)*transmittedCol;
             
         } else {            
@@ -245,7 +246,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
             if (exitPoint.didCollide()) {
                 glm::vec3 exitDir = glm::refract(refractedDir, -exitPoint.normal, material->refractionIndex);
                 Ray exitRay = Ray(exitPoint.location + exitDir * 0.001f, exitDir);
-                Color refractedCol = trace(exitRay, depth+1, giSamples); 
+                Color refractedCol = trace(exitRay, scene, depth+1, giSamples); 
                 color += (1.0f-materialColor.a)*refractedCol;
             } else {
                 // this case shouldn't happen, but might due to rounding... just ignore                 
@@ -257,7 +258,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
 }
 
 /** Renders given number of pixels before returning control. */
-int Camera::render(int pixels, bool autoReset)
+int Camera::render(Scene* scene, int pixels, bool autoReset)
 {	
 	int totalPixels = SCREEN_WIDTH * SCREEN_HEIGHT;
 	float aspectRatio = float(SCREEN_WIDTH / SCREEN_HEIGHT);
@@ -308,7 +309,7 @@ int Camera::render(int pixels, bool autoReset)
             }
 			
 			Ray ray = Ray(location, dir);
-			Color col = trace(ray, 0, (lightingModel == LM_GI) ? GI_SAMPLES : 0);
+			Color col = trace(ray, scene, 0, (lightingModel == LM_GI) ? GI_SAMPLES : 0);
 			outputCol = outputCol + (col * (1.0f/requiredSamples));
 		}
 				

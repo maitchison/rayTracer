@@ -12,7 +12,6 @@
 #include "GFX.h"
 #include "ContainerObject.h"
 #include "Light.h"
-#include "Scene.h"
 
 // various lighting models for the render
 enum LightingModel {
@@ -31,6 +30,9 @@ enum LightingModel {
     // displays local coords
     LM_LOCAL
 };
+
+// forward declare the scene object.
+class Scene;
 
 class Camera : public SceneObject
 {
@@ -68,10 +70,7 @@ public:
     LightingModel lightingModel = LM_DIRECT;
 
     // ----------------------------
-    
-    // the scene to cast rays through.
-	Scene* scene;
-
+        
     Color backgroundColor = Color(0.1f,0.2f,0.4f,1.0f);
 
 	Camera(glm::vec3 location = glm::vec3(0,0,0));
@@ -80,17 +79,18 @@ public:
     /**
      * Traces ray through camera's scene and calculates lighting at intersection point.
      * @ray The ray to test
+     * @scene The scene to trace through
      * @depth Recusion depth
      * @giSamples Number of GI samples to use, 0 to disable.
      * @returns color at the interesection point of the ray and the scene.
      **/
-	Color trace(Ray ray, int depth = 0, int giSamples = 0);
+	Color trace(Ray ray, Scene* scene, int depth = 0, int giSamples = 0);
 	
 	/** Render this number of pixels.  Rendering can be done bit by bit.  
 	 @param pixels: maximum number of pixels to render.  -1 renders entire image.
 	 @param autoReset: causes renderer to render next frame once this frame finishes rendering.
 	*/
-	int render(int pixels, bool autoReset=false);	
+	int render(Scene* scene, int pixels, bool autoReset=false);	
 
     /** Reset the camerea rendering. */
     void reset()
@@ -118,6 +118,6 @@ public:
 protected:
 
     /** Calculates lighting of given light at this intersection point. */
-    void calculateLighting(RayIntersectionResult intersection, Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum);
+    void calculateLighting(RayIntersectionResult intersection, ContainerObject* scene, Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum);
 	
 };

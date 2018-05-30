@@ -34,7 +34,7 @@ public:
 class ContainerObject : public SceneObject
 {
 protected:
-    std::vector<SceneObject*> children;
+    std::vector<SceneObject*> children = std::vector<SceneObject*>();
 
 public:	
 	ContainerObject(glm::vec3 location = glm::vec3()) : SceneObject(location)
@@ -52,7 +52,7 @@ public:
 	RayIntersectionResult intersectObject(Ray ray) override; 
 
     /** Sets material for all child objects. */
-    void setMaterial(Material* material)
+    void setChildrenMaterial(Material* material)
     {
         this->material = material;
         for (int i = 0; i < children.size(); i++) {
