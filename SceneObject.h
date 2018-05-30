@@ -90,16 +90,6 @@ protected:
         localTransform = glm::rotate(localTransform, rotation.z, glm::vec3(0,0,1));        
         localTransform = glm::scale(localTransform, scale);        
         
-        // not sure if this is better or not?
-        /*
-        localTransformInv = glm::mat4x4(1);        
-        localTransformInv = glm::scale(localTransformInv, 1.0f/scale);        
-        localTransformInv = glm::rotate(localTransformInv, -rotation.z, glm::vec3(0,0,1));
-        localTransformInv = glm::rotate(localTransformInv, -rotation.y, glm::vec3(0,1,0));
-        localTransformInv = glm::rotate(localTransformInv, -rotation.x, glm::vec3(1,0,0));        
-        localTransformInv = glm::translate(localTransformInv, -location);                   
-        */
-
         localTransformInv = glm::inverse(localTransform);        
 
     }
@@ -170,8 +160,9 @@ public:
         // transform world coords                    
         result.location = toParent(glm::vec4(result.location,1));
         
-        //note: this is not the proper trainsform.  It should be something to do with the inverse transpose,
+        //note: this is not the proper transform.  It should be something to do with the inverse transpose,
         //if the objects scale is set to non uniform this this will be wrong.
+
         result.normal = glm::normalize(toParent(glm::vec4(result.normal,0)));
 
         // we may need to know something about the transformed ray

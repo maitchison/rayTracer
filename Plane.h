@@ -38,7 +38,7 @@ public:
         this->v3 = v3;
         this->v4 = v4;
         this->bounded = true;
-        // note: in constract to the lab we calculate this on initialization and reuse it, which will be faster than recalculating it each time.
+        // note: in contrast to the lab we calculate this on initialization and reuse it, which will be faster than recalculating it each time.
         this->normal = glm::normalize(glm::cross(v2-v1, v4-v1)); 		
         this->tangent = glm::normalize(v2-v1); 		
         this->bitangent = glm::normalize(v4-v1); 		

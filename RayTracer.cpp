@@ -294,18 +294,37 @@ Material* parameterisedMaterial(int col, int type)
 void initTextureSampling()
 {
     // default light
-    scene->add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
-	
+    Light* light = new Light(glm::vec3(0,2,-15), Color(1,1,1,1));
+    light->lightSize = 1.0f;
+    scene->add(light);  
+
+    // some pillars
+    Cube* cube;
+    for (int i = 0; i < 10; i++) {
+        cube = new Cube(glm::vec3(-10+(i*2),0,-10), glm::vec3(0.7,10,0.7));
+        if (i == 7) {
+            cube->material->emisiveColor = 5.0f * Color(1.0f,0.5f,0,1);
+        }
+        scene->add(cube);
+    }
+
+    // a sphere
+    scene->add(new Sphere(glm::vec3(0,2,0), 1.0f));
+    
     // ground plane
-    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 10, 0), glm::vec3(0,0,10));        
-    plane->material->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
-    plane->material->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);    
+    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+    //plane->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+    //plane->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);    
+    plane->material->diffuseColor = Color(0.7,0.7,0.7,1.0);
+    plane->material->reflectivity = 0.2f;
+    plane->material->shininess = 50;
     scene->add(plane); 
 
-    camera.setLocation(glm::vec3(0,2,12));
-    camera.setRotation(glm::vec3(-0.6,0,0));
-    camera.move(-6,0,0);
+    camera.setLocation(glm::vec3(-9.2,3.0,2));
+    camera.setRotation(glm::vec3(0,-0.6,0));    
 
+    // blue sky light
+    camera.backgroundColor = Color(0.03,0.05,0.15,1) * 0.1f;
     
 }
 
@@ -314,13 +333,16 @@ void initTextureSampling()
 void initMaterialSpheres()
 {
     // default light
-    scene->add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
-	
+    Light* light = new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1));
+    scene->add(light);  
+    
     // ground plane
     Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
     plane->material->diffuseTexture = new CheckerboardTexture(4.0f, Color(0.5f,0.5f,0.5f,1), Color(0.1,0.1,0.1,1));
     plane->material->reflectivity = 0.1f;
     scene->add(plane); 
+
+  
         
     const int NUM_OBJECTS_X = 20;
     const int NUM_OBJECTS_Y = 20;

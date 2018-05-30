@@ -1,5 +1,8 @@
 #include "Camera.h"
 
+// a small offset is applied to reflected rays / shadow rays so they don't self interesect.
+const float OFFSET_BIAS = 0.001f;
+
 Camera::Camera(glm::vec3 location) : SceneObject(location)
 {
 }
@@ -9,8 +12,10 @@ void Camera::calculateLighting(RayIntersectionResult intersection, Light* light,
 {
     Material* material = intersection.target->material;
 
+    glm::vec3 lightPos = light->sampleLocation();
+
     // diffuse light    
-    glm::vec3 lightVector = glm::normalize(light->getLocation() - intersection.location);    
+    glm::vec3 lightVector = glm::normalize(lightPos - intersection.location);    
     float diffusePower = glm::dot(lightVector, intersection.normal);
     if (diffusePower < 0) diffusePower = 0;
     
@@ -43,11 +48,11 @@ void Camera::calculateLighting(RayIntersectionResult intersection, Light* light,
         // handle transparient shadows by letting ray continue when meeting a transparient object
         for (int i = 0; i < 9; i++) {            
             // offsetting the shadow trace a little stops self shadowing artifacts
-            Ray shadow(shadowTestPoint + lightVector * 0.01f, lightVector);
+            Ray shadow(shadowTestPoint + lightVector * OFFSET_BIAS, lightVector);
             shadow.shadowTrace=true; // this will ignore objects that do not cast shadows.
 
             RayIntersectionResult shadowIntersection = scene->intersect(shadow);    
-            lightDistance = glm::length(light->getLocation() - shadowTestPoint);
+            lightDistance = glm::length(lightPos - shadowTestPoint);
 
             if (shadowIntersection.didCollide() && shadowIntersection.t < lightDistance) {
                 // we sample the uv, so that textured transpariency will work :)        
@@ -171,7 +176,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
             if (randf() > sqrtDiffusePower) continue;                
             diffusePower = sqrtDiffusePower;
             
-            Ray giRay = Ray(intersection.location + rayDir * 0.01f, rayDir);            
+            Ray giRay = Ray(intersection.location + rayDir * OFFSET_BIAS, rayDir);            
             
             // We then test the color of this ray.  
             // We set giSamples to 1 if gi was enabled, and 0 otherwise, this gives a 2 bounce lighting model.            
@@ -208,7 +213,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
             reflectedDir = defocus(reflectedDir, material->reflectionBlur);
         }
 
-        Ray reflectedRay(intersection.location + reflectedDir * 0.01f, reflectedDir);
+        Ray reflectedRay(intersection.location + reflectedDir * OFFSET_BIAS, reflectedDir);
         Color reflectedCol = trace(reflectedRay, depth+1, giSamples); 
         color += (material->reflectivity*reflectedCol);        
     }
@@ -220,7 +225,7 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
             // transparency 
     
             // start the ray a little further on from where we hit.
-            Ray transmittedRay = Ray(intersection.location + 0.001f * ray.dir, ray.dir);
+            Ray transmittedRay = Ray(intersection.location + OFFSET_BIAS * ray.dir, ray.dir);
             Color transmittedCol = trace(transmittedRay, depth, giSamples); 
             color += (1.0f-materialColor.a)*transmittedCol;
             

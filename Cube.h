@@ -34,14 +34,14 @@ public:
         glm::vec3 v6 = glm::vec3(+w,-h,+d);
         glm::vec3 v7 = glm::vec3(+w,+h,+d);
         glm::vec3 v8 = glm::vec3(-w,+h,+d);
-
-        add(new Plane(v1,v2,v3,v4)); // front
-        add(new Plane(v5,v6,v7,v8)); // back
-        add(new Plane(v4,v3,v7,v8)); // top
-        add(new Plane(v2,v1,v5,v6)); // bottom        
-        add(new Plane(v3,v2,v6,v7)); // left
-        add(new Plane(v1,v4,v8,v5)); // right                                        
-
+    
+        add(new Plane(v4,v3,v2,v1)); // front
+        add(new Plane(v5,v6,v7,v8)); // back        
+        add(new Plane(v8,v7,v3,v4)); // top
+        add(new Plane(v6,v5,v1,v2)); // bottom                    
+        add(new Plane(v7,v6,v2,v3)); // left
+        add(new Plane(v5,v8,v4,v1)); // right                                        
+        
         // set the radius
         boundingSphereRadius = glm::length(scale);
     }
