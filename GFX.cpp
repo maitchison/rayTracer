@@ -26,6 +26,20 @@ void GFX::putPixel(int x, int y, Color col, bool shallow)
     }
 }
 
+
+/** Sets buffer to sample buffer. */
+void GFX::updateBuffer()
+{
+    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+		for (int x = 0; x < SCREEN_WIDTH; x++) {
+            {
+                buffer[y][x] = colorToInt24(sampleBuffer[y][x] / sampleBuffer[y][x].a);
+            }
+        }
+    }
+}
+
+
 /** Adds a simple to the buffer, samples are averaged by weight. */
 void GFX::addSample(int x, int y, Color col, float weight)
 {

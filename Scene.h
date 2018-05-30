@@ -17,8 +17,10 @@ class Scene : public ContainerObject
 
 protected:
     bool _isLoaded = false;
-
+    
 public:
+
+    std::string name = "Scene";
 
     bool isAnimated = false;
 

@@ -7,6 +7,7 @@
 #include "Color.h"
 #include "Utils.h"
 #include <stdint.h>
+#include "TGAWriter.h"
 
 #ifdef __APPLE__
 	#include <GLUT/glut.h>
@@ -34,6 +35,13 @@ public:
 	void putPixel(int x, int y, Color col, bool shallow=false);    
     void addSample(int x, int y, Color col, float weight = 1.0);
 	void clear(Color col = Color(0,0,0,1), bool shallow=false);
+    void updateBuffer();
+    void screenshot(std::string filename) {
+        const char *cstr = filename.c_str();
+        updateBuffer();
+        printf("Saving screenshot %s\n", cstr);
+        write_truecolor_tga(cstr, *buffer, SCREEN_WIDTH, SCREEN_HEIGHT);
+    }
 	void blit();    
 	void init(void);
 };

@@ -10,7 +10,10 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <sstream>
+
 #include <glm/glm.hpp>
+#include <GL/glut.h>
 
 #include "SceneObject.h"
 #include "ContainerObject.h"
@@ -29,10 +32,7 @@
 #include "GFX.h"
 #include "PLYReader.h"
 
-#include <sstream>
-
 #include "math.h"
-#include <GL/glut.h>
 
 using namespace std;
 
@@ -65,6 +65,8 @@ const int RM_NONE = 0;
 const int RM_LQ = 1;
 const int RM_HQ = 2;
 
+const int requiredPasses = 16;
+
 RUN_MODE mode = RM_MANUAL;
 
 // --------------------------------
@@ -75,6 +77,8 @@ int frameOn = 0;
 
 int render_mode = RM_LQ;
 int initialScene = 0;
+
+int passes = 0;
 
 // --------------------------------
 
@@ -104,6 +108,7 @@ void redraw()
     render_mode = RM_LQ;
     camera->reset();
     gfx.clear();
+    passes = 0;
 }
 
 void specialKeyboard(int key, int x, int y)
@@ -140,6 +145,7 @@ void keyboard(unsigned char key, int x, int y)
         case 'c': camera->move(0, 0, -1); break;
         case 'q': camera->rotate(+0.1f,0); break;
         case 'e': camera->rotate(-0.1f,0); break;
+        case 'p': gfx.screenshot("Screenshot.tga");
         case ' ': 
             // force render, but also print locaiton.
             printf("Camera at:");
@@ -202,9 +208,14 @@ void update(void)
             camera->superSample = HQ_RAYS;
             camera->GI_SAMPLES = 64;
             camera->lqMode = false;
-			pixelsRendered = camera->render(currentScene, 5 * 100, true);
+			pixelsRendered = camera->render(currentScene, 5 * 100, false);
 			if (pixelsRendered == 0) {
-				render_mode = RM_NONE;
+                passes++;
+                if (mode == RM_RENDER_AND_EXIT && passes >= requiredPasses) {
+                    gfx.screenshot(currentScene->name+".tga");
+                    exit(0);
+                }
+                camera->reset();				
 			}
 			break;
 	}
@@ -257,11 +268,11 @@ int main(int argc, char *argv[]) {
             istringstream ss(argv[1]);
             int sceneNumber;
             if (!(ss >> sceneNumber)) {
-                cerr << "Invalid input " << argv[1] << ", please use an integer [0..6].\n";
+                cerr << "Invalid input " << argv[1] << ", please use an integer.\n";
                 return -1;
             }
             printf("Auto rendering scene %d to file and exiting.\n", sceneNumber);
-            mode = RM_MANUAL;
+            mode = RM_RENDER_AND_EXIT;
             initialScene = sceneNumber;
             break;
     }
