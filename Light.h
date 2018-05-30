@@ -9,6 +9,9 @@ public:
     // color of the light
     Color color;
 
+    // if > 0 then light is treated as an area light of given radius
+    float lightRadius = 0.0f;
+
     // how much ambient light this light generates.
     float ambientLight = 0.1f;
 

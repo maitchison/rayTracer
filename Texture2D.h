@@ -12,7 +12,7 @@
 #include "picoPNG.h"
 
 enum TextureClip {TC_WRAP, TC_CLAMP};
-enum TextureSample {TS_NEAREST, TS_BILINEAR};
+enum TextureSampler {TS_NEAREST, TS_BILINEAR};
 
 /** Base class for 2d texture.  Defaults to returning a single color */
 class Texture2D
@@ -20,11 +20,9 @@ class Texture2D
 public:
 
     TextureClip clipping = TC_WRAP;
-    TextureSample sampling = TS_NEAREST;
-
+    
     // if this texture represents a normal map or not.
     bool isNormalMap = false;
-
 
     Texture2D() {};
     
@@ -65,10 +63,12 @@ public:
 class BitmapTexture : public Texture2D
 {
 public:
-        
+                
     unsigned long width, height;
     std::vector<unsigned char> buffer, image;
 
+    TextureSampler sampler = TS_BILINEAR;
+    
     /** Load texture from filename.  Filename should be a valid PNG file.
      * @param filename The filename to load.
      * @param isNormalMap If true texture will be treated as a normal map.
@@ -79,20 +79,35 @@ public:
         int error = decodePNG(image, width, height, buffer.empty() ? 0 : &buffer[0], (unsigned long)buffer.size());
         if (error != 0) std::cout << "Error: " << error << std::endl;
     }
+
+    /** Samples texture given u and v using a specified filtering */
+    glm::vec4 sample(glm::vec2 uv, TextureSampler sampler) {
+
+        uv = clip(uv);                
+        // note uv is [0,1] so x is [0,width-1] 
+        float x = (uv.x * (width-1));
+        float y = (uv.y * (height-1));
+
+        switch (sampler) {
+            case TS_NEAREST: {
+                int base = ((int)x + (int)y * width) * 4;
+                return glm::vec4(image[base+0]/255.0f, image[base+1]/255.0f, image[base+2]/255.0f, image[base+3]/255.0f);                             
+            }
+            case TS_BILINEAR: 
+                uv = glm::vec2((int)x / (float)width, (int)y / (float)height);
+                glm::vec2 dx = glm::vec2(1.0f/width,0);
+                glm::vec2 dy = glm::vec2(0,1.0f/height);
+                return  
+                    (sample(uv, TS_NEAREST) * (1-frac(x)) * (1-frac(y))) + 
+                    (sample(uv+dx, TS_NEAREST)  * frac(x) * (1-frac(y))) +
+                    (sample(uv+dx+dy, TS_NEAREST) * frac(x) * frac(y)) +
+                    (sample(uv+dy, TS_NEAREST) * (1-frac(x)) * frac(y));                                
+        }                
+    }
         
     /** Samples texture given u and v between 0, 1. */
     glm::vec4 sample(glm::vec2 uv) override {
-
-        uv = clip(uv);
-        
-        // sample texture (nearest only for the moment...)
-        // note uv is [0,1] so x is [0,width-1] 
-        int x = (int)(uv.x * (width-1));
-        int y = (int)(uv.y * (height-1));
-
-        int base = (x + y * width) * 4;        
-        return glm::vec4(image[base+0]/255.0f, image[base+1]/255.0f, image[base+2]/255.0f, image[base+3]/255.0f);
-        
+        return sample(uv, this->sampler);        
     }
 };
 

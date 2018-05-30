@@ -80,8 +80,6 @@ Color Camera::trace(Ray ray, int depth, int giSamples)
         return Color(0,0,0,1);
     }
 
-    // stub:
-    
     RayIntersectionResult intersection = scene->intersect(ray);
     
     lastTraceIntersection = intersection;

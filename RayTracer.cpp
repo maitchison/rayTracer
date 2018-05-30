@@ -290,6 +290,26 @@ Material* parameterisedMaterial(int col, int type)
     return material;
 }
 
+/** Demonistrates some of the texture sampling */
+void initTextureSampling()
+{
+    // default light
+    scene->add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
+	
+    // ground plane
+    Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 10, 0), glm::vec3(0,0,10));        
+    plane->material->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
+    plane->material->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);    
+    scene->add(plane); 
+
+    camera.setLocation(glm::vec3(0,2,12));
+    camera.setRotation(glm::vec3(-0.6,0,0));
+    camera.move(-6,0,0);
+
+    
+}
+
+
 /** This scene contains 400 spheres demonstrating the material types. */
 void initMaterialSpheres()
 {
@@ -579,7 +599,7 @@ void initScene()
 {
     scene = new Scene();
 
-    initMaterialSpheres();
+    initTextureSampling();
 
     camera.scene = scene;
 }
