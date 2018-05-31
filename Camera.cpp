@@ -113,16 +113,16 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
     // modify normal vector based on normal map (if required)
     if (material->normalTexture) {
         // we find the 3 vectors required to transform the normal map from object space to world space.
-        glm::vec3 normalVector = intersection.normal;
         glm::vec3 materialNormal = glm::vec3(material->normalTexture->sampleNormalMap(intersection.uv) * 2.0f - 1.0f);
 
         // soften the normal map a little
         materialNormal = glm::normalize(materialNormal + 1.0f * glm::vec3(0,0,1));
 
-        glm::vec3 normal = normalVector;
-        glm::vec3 tangent = intersection.target->getTangent(intersection.location);
+        glm::vec3 normal = intersection.normal;
+        glm::vec3 tangent = intersection.tangent;
         glm::vec3 bitangent = glm::cross(normal, tangent);
-        normalVector = glm::vec3(
+
+        glm::vec3 normalVector = glm::vec3(
             materialNormal.x*tangent + materialNormal.y*bitangent + materialNormal.z*normal             
         );
 

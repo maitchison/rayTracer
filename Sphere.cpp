@@ -39,16 +39,12 @@ RayIntersectionResult Sphere::intersectObject(Ray ray)
     result.t = t;
     result.local = result.location = ray.pos + ray.dir * t;
     result.normal = glm::normalize(result.local);    
+
+    // might be a faster way of doing this?
+    float phi = atan2(result.local.z,result.local.x);    
+    result.tangent = glm::vec3(-sin(phi), 0, cos(phi));    
     
     return result;
-}
-
-/** 
- * Calculates a tangent to the point p that follows the 'u' direction in terms of the uv co-rds. 
- */ 
-glm::vec3 Sphere::getTangent(glm::vec3 p) {
-    float phi = atan2(p.z,p.x);
-    return glm::vec3(-sin(phi), 0, cos(phi));    
 }
 
 /**

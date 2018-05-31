@@ -181,7 +181,7 @@ public:
         cube->material->diffuseColor = Color(1.0f, 0.7f, 0.6f, 1.0f);
         add(cube);
 
-        Cylinder* cylinder = new Cylinder(glm::vec3(+10,-15,-20), 3.0f, 10.0f);        
+        Cylinder* cylinder = new Cylinder(glm::vec3(+10,-20,-20), 3.0f, 10.0f);        
         cylinder->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
         cylinder->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);            
         add(cylinder);

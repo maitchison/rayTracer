@@ -33,6 +33,9 @@ public:
     // surface normal at the point of collision.
     glm::vec3 normal;
 
+    // surface tangent at the point of collision.
+    glm::vec3 tangent;
+
     // the transformed ray used during intersection test.
     // note: this probably isn't needed.
     Ray transformedRay;
@@ -55,12 +58,13 @@ public:
     RayIntersectionResult() {};
 
     /** Creates a ray intersection result with given parameters. */
-    RayIntersectionResult(SceneObject* target, float t, glm::vec3 local, glm::vec3 normal = glm::vec3()) {
+    RayIntersectionResult(SceneObject* target, float t, glm::vec3 local, glm::vec3 normal = glm::vec3(), glm::vec3 tangent = glm::vec3()) {
         this->target = target;
         this->t = t;
         this->local = local;
         this->location = local;
         this->normal = normal;                
+        this->tangent = tangent;
     }
 
     static RayIntersectionResult NoCollision() {
@@ -162,8 +166,8 @@ public:
         
         //note: this is not the proper transform.  It should be something to do with the inverse transpose,
         //if the objects scale is set to non uniform this this will be wrong.
-
         result.normal = glm::normalize(toParent(glm::vec4(result.normal,0)));
+        result.tangent = glm::normalize(toParent(glm::vec4(result.tangent,0)));
 
         // we may need to know something about the transformed ray
         result.transformedRay = ray;
@@ -180,10 +184,7 @@ public:
 
     /** returns uv coords of pos (in local space) */
     virtual glm::vec2 getUV(glm::vec3 pos) { return glm::vec2(); };
-
-    /** returns tangent p (in local space) */
-    virtual glm::vec3 getTangent(glm::vec3 p) { return glm::vec3(); };
-
+    
     /** converts from parent coordanate space to local space. */
     glm::vec3 toLocal(glm::vec4 p) {
         return glm::vec3(localTransformInv * p);

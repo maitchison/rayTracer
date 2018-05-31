@@ -38,6 +38,5 @@ public:
 	};
 
 	RayIntersectionResult intersectObject(Ray ray) override;
-    glm::vec2 getUV(glm::vec3 pos) override;
-    glm::vec3 getTangent(glm::vec3 p) override;
+    glm::vec2 getUV(glm::vec3 pos) override;    
 };
