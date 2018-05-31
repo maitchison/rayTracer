@@ -8,4 +8,3 @@
 ./RayTracer.exe 5 &
 ./RayTracer.exe 6 &
 ./RayTracer.exe 7 &
-./RayTracer.exe 8 &

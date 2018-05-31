@@ -149,12 +149,20 @@ public:
     }
 
     /** Returns color at given uv co-ords. */
-    glm::vec4 sample(glm::vec2 uv) override { 			
+    glm::vec4 sample(glm::vec2 uv) override { 			        
         float u = uv.x;
         float v = uv.y;
 
-        float cx = (u-0.75f)*3.0f;
-        float cy = (v-0.5f)*2.0f;
+        // map uv to [-0.5..0.5]
+        u = u - (int)u;
+        v = v - (int)v;
+        if (u < 0) u++;
+        if (v < 0) v++;
+        u = (u - 0.5f);
+        v = (v - 0.5f);
+
+        float cx = (u-0.25)*2.0f;
+        float cy = v*2.0f;
         
         float x = 0;
         float y = 0;

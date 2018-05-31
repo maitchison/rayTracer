@@ -21,13 +21,12 @@ Material* parameterisedMaterial(int col, int type)
     Material* material = new Material();
 
     // select a base color
-    switch (col % 6) {
-        case 0: material->diffuseColor = Color(0.9f,0.1f,0.1f,1); break;
-        case 1: material->diffuseColor = Color(0.1f,0.9f,0.1f,1); break;
+    switch (col % 5) {
+        case 0: material->diffuseColor = Color(0.9f,0.1f,0.2f,1); break;
+        case 1: material->diffuseColor = Color(0.1f,0.9f,0.2f,1); break;
         case 2: material->diffuseColor = Color(0.3f,0.4f,0.9f,1); break;
-        case 3: material->diffuseColor = Color(0.1f,0.1f,0.1f,1); break;
-        case 4: material->diffuseColor = Color(0.5f,0.5f,0.5f,1); break;
-        case 5: material->diffuseColor = Color(1.0f,1.0f,1.0f,1); break;            
+        case 3: material->diffuseColor = Color(0.5f,0.5f,0.5f,1); break;
+        case 4: material->diffuseColor = Color(1.0f,1.0f,1.0f,1); break;            
     }    
 
     switch (type % 10) {
@@ -151,9 +150,9 @@ public:
 
         add(new Light(glm::vec3(-10,30,0), Color(1.0f,1.0f,1.0f,1)));
         
-        Sphere* sphere1 = new Sphere(glm::vec3(-15.0, -16.0, -25.0), 4.0);
+        Sphere* sphere1 = new Sphere(glm::vec3(-10.0, -16.0, -25.0), 4.0);
         Sphere* sphere2 = new Sphere(glm::vec3(0.0, -5.0, -30.0), 10.0);
-        Sphere* sphere3 = new Sphere(glm::vec3(+15.0, -16.0, -25.0), 4.0);
+        Sphere* sphere3 = new Sphere(glm::vec3(+10.0, -16.0, -25.0), 4.0);
 
         sphere1->material->diffuseColor = Color(0.4f,0.4f,0.4f,1.0f);
         sphere1->material->reflectivity = 0.7f;
@@ -162,16 +161,16 @@ public:
         sphere2->material->diffuseColor = Color(0.4f,0.4f,0.4f,1.0f);
         sphere2->material->reflectivity = 0.7f;
 
-        sphere3->material->diffuseColor = Color(1,0.7,0.6,0.1f);
+        sphere3->material->diffuseColor = Color(1,1,1,0.03f);
         sphere3->material->refractionIndex = 1.1f;                
 
         Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));                     
         plane->material = Material::Checkerboard(1.0f);
         
         add(plane); 
-        //add(sphere1);     
-        //add(sphere2); 
-        //add(sphere3);     
+        add(sphere1);     
+        add(sphere2); 
+        add(sphere3);     
 
         // extra objects
         Cube* cube = new Cube(glm::vec3(-10,-18,-15), glm::vec3(4,4,4));
@@ -181,7 +180,8 @@ public:
         cube->material->diffuseColor = Color(1.0f, 0.7f, 0.6f, 1.0f);
         add(cube);
 
-        Cylinder* cylinder = new Cylinder(glm::vec3(+10,-20,-20), 3.0f, 10.0f);        
+        Cylinder* cylinder = new Cylinder(glm::vec3(+10,-20,-15), 3.0f, 3.0f);        
+        cylinder->material->diffuseColor = Color(0.5,0.5,0.5,1.0);
         cylinder->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
         cylinder->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);            
         add(cylinder);
@@ -191,7 +191,7 @@ public:
         sphere->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);            
         add(sphere);
         
-        camera->setLocation(glm::vec3(0,0,+30));
+        camera->setLocation(glm::vec3(0,-10,+1));
         camera->lightingModel = LM_DIRECT;    
 
         // white sky light
@@ -266,17 +266,21 @@ public:
         name = "MaterialSpheres";
 
         // default light
-        Light* light = new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1));
+        Light* light = new Light(glm::vec3(-10,30,0), 0.8f * Color(1,1,1,1));
         add(light);  
         
         // ground plane
         Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
-        plane->material->diffuseTexture = new CheckerboardTexture(4.0f, Color(0.5f,0.5f,0.5f,1), Color(0.1,0.1,0.1,1));
-        plane->material->reflectivity = 0.1f;
+        plane->material->diffuseColor = Color(0.3f,0.3f,0.3f,1.0f);
+        //plane->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+        //plane->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);    
+        
+        //plane->material->diffuseTexture = new CheckerboardTexture(4.0f, Color(0.5f,0.5f,0.5f,1), Color(0.1,0.1,0.1,1));
+        plane->material->reflectivity = 0.25f;
         add(plane);     
             
         const int NUM_OBJECTS_X = 20;
-        const int NUM_OBJECTS_Y = 20;
+        const int NUM_OBJECTS_Y = 10;
         
         // create spheres
         for (int i = 0; i < NUM_OBJECTS_X; i++) {
@@ -289,12 +293,11 @@ public:
         }
                     
         camera->lightingModel = LM_DIRECT;
-        camera->setLocation(glm::vec3(0,2,12));
+        camera->setLocation(glm::vec3(0,4.7,10.3));
         camera->setRotation(glm::vec3(-0.6,0,0));
-        camera->move(-6,0,0);
-
+        
         // blue sky light
-        camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
+        camera->backgroundColor = Color(0.03,0.05,0.15,1) * 1.0f;
     }
 };
 
@@ -313,7 +316,7 @@ public:
         name = "ManyDragons";
 
         // default light
-        add(new Light(glm::vec3(-10,30,0), Color(1,1,1,1)));    
+        add(new Light(glm::vec3(-10,30,0), 0.5f*Color(1,1,1,1)));    
         
         // ground plane
         Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
@@ -330,8 +333,8 @@ public:
         //Sphere* dragon = new Sphere(glm::vec3(0,1.0,0),0.5); 
         //Cube* dragon = new Cube(glm::vec3(0,1,0),glm::vec3(0.5)); 
 
-        const int NUM_OBJECTS_X = 10;
-        const int NUM_OBJECTS_Y = 10;
+        const int NUM_OBJECTS_X = 15;
+        const int NUM_OBJECTS_Y = 15;
         
         // duplicate dragons
         for (int i = 0; i < NUM_OBJECTS_X; i++) {
@@ -340,15 +343,30 @@ public:
                 // we can instead create copies of them with the ReferenceObject type.  This allows for a copy of 
                 // the origional object, but with a new transform applied.
                 ReferenceObject* dragonCopy = new ReferenceObject(glm::vec3((i-(NUM_OBJECTS_X/2))*2,-0.5,(j-(NUM_OBJECTS_Y/2))*2), dragon);
-                dragonCopy->setRotation(glm::vec3(0, (randf()-0.5f)*PI*0.1f + (0.4f*PI), 0));
-                dragonCopy->material = parameterisedMaterial(j,i);            
+                dragonCopy->setRotation(glm::vec3(0, (randf()-0.5f)*PI*0.2f + (0.4f*PI), 0));
+                dragonCopy->material = parameterisedMaterial(i+(j*3), 0);                
                 add(dragonCopy); 
             }    
         }
+
+        // some light sources for GI
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                Cylinder* lightSphere = new Cylinder(glm::vec3(((i*2)-1)*8,0,((j*2)-1)*8),1.1,3);
+                lightSphere->material = parameterisedMaterial(4+i+j*2, 2);
+                lightSphere->material->diffuseColor *= 5.0; // make them bright :)
+                add(lightSphere);
+            }    
+        }
                     
-        camera->lightingModel = LM_DIRECT;
-        camera->setLocation(glm::vec3(0,3,12));
+        camera->lightingModel = LM_DIRECT; // gi looks way better, but is slow :(
+
+        //camera->setLocation(glm::vec3(0,7.6,16.3));
+        //camera->setLocation(glm::vec3(0,1.56,9.36));
+        //camera->setLocation(glm::vec3(0,2.65,15.58));
+        camera->setLocation(glm::vec3(0,4.08,18.21));
         camera->setRotation(glm::vec3(-0.5,0,0));
+
 
         // blue sky light
         camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
@@ -520,6 +538,10 @@ public:
 
         // lights
         add(new Light(glm::vec3(0,30,0)));
+        Cube* lightBox = new Cube(glm::vec3(0,40,-40), glm::vec3(20,10,20));
+        lightBox->material->emisiveColor = Color(1,1,1,1) * 5.0f;
+        lightBox->castsShadows = false;
+        add(lightBox);        
 
         // infinite planes are a little faster than clipped planes and won't have potential artifacts at the edges.
         Plane* leftPlane = new Plane(glm::vec3(-40,0,0), glm::vec3(1,0,0));
@@ -535,7 +557,7 @@ public:
         backPlane->material = forePlane->material = floorPlane->material = ceilingPlane->material = Material::Default(Color(0.9,0.9,0.9,1.0));
 
         // reflective blury sphere
-        Sphere* sphere = new Sphere(glm::vec3(0,-20,-70), 10.0f);
+        Sphere* sphere = new Sphere(glm::vec3(0,-20,-60), 10.0f);
         sphere->material = Material::Reflective(glm::vec4(0.1f,0.1f,0.1f,1.0f), 0.8f);
 
         // a framed mandelbrot picture in the background
@@ -548,9 +570,7 @@ public:
         pictureFrame->material = woodMaterial;
         
         Material* pictureMaterial = new Material();
-        pictureMaterial->diffuseTexture = new MandelbrotTexture();
-        // todo: might be nice to add some ruff normal texture (such as canvas) to this.    
-        picture->material = pictureMaterial;
+        picture->material->diffuseTexture = new MandelbrotTexture();        
 
         // create pedestals with object ontop.
         glm::vec3 pos;
@@ -603,5 +623,7 @@ public:
         add(picture);
 
         add(sphere);        
+
+        camera->lightingModel = LM_GI;
     }
 };
