@@ -54,8 +54,9 @@ glm::vec2 Plane::getUV(glm::vec3 pos) {
     glm::vec3 b2 = bitangent;        
     
     // change co-ords to that basis
-    glm::vec3 p = pos - v1;
-    float u = glm::dot(p, b1)/glm::dot(b1,b1);
-    float v = glm::dot(p, b2)/glm::dot(b2,b2);
+    glm::vec3 p = v1 - pos;
+    float u = glm::dot(p, b1);
+    float v = glm::dot(p, b2);    
+
     return glm::vec2(u,v) * uvScale;    
 }

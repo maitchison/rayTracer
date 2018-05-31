@@ -41,8 +41,11 @@ public:
         // note: in contrast to the lab we calculate this on initialization and reuse it, which will be faster than recalculating it each time.
         this->normal = glm::normalize(glm::cross(v2-v1, v4-v1)); 		
         this->tangent = glm::normalize(v2-v1); 		
-        this->bitangent = glm::normalize(v4-v1); 		
-        this->uvScale = 1.0f/glm::vec2(glm::length(v2-v1), glm::length(v4-v1));        
+        this->bitangent = glm::normalize(v4-v1); 
+        print(normal);
+        print(tangent);
+        print(bitangent);
+        this->uvScale = 1.0f/glm::vec2(glm::length(v2-v1), glm::length(v4-v1));                
 	};
 
     /** Creates a plane as defined by a point a normal, and an 'up' direction. */

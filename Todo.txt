@@ -40,10 +40,13 @@ Feature list:
 [*] mesh rendering (with fast subdivision)
 [*] F1-F7 control lighting model.
 [*] Scene: dragon
+[*] Scene: many dragons
 
 Todo:
 
-[*] Scene: many dragons
+[ ] print should not reset render
+[ ] in render and exit mode disable keypresses...
+
 
 Bugs:
 [fixed] shadows look wrong          <- yes, fixed, was only checking up to 1 unit away...

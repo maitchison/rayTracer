@@ -76,7 +76,7 @@ int counter = 0;
 int frameOn = 0;
 
 int render_mode = RM_LQ;
-int initialScene = 0;
+int initialScene = 1;
 
 int passes = 0;
 
@@ -245,7 +245,7 @@ void initialize()
     printf("Loading scenes.\n");
     
     scenes.push_back(new TestScene()); // this is realy just here to pad out scene '0'.
-    scenes.push_back(new GIScene());        
+    scenes.push_back(new BasicScene());        
     scenes.push_back(new CornellBoxScene());        
     scenes.push_back(new AnimatedScene());        
     scenes.push_back(new MaterialSpheresScene());        
@@ -283,8 +283,13 @@ int main(int argc, char *argv[]) {
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("RayTracer");
 	initialize();
-    glutKeyboardFunc(keyboard);
-    glutSpecialFunc(specialKeyboard);
+
+    if (mode != RM_RENDER_AND_EXIT) {
+        // don't  use keyboard commands if we are in render and exit mode.
+        glutKeyboardFunc(keyboard);
+        glutSpecialFunc(specialKeyboard);
+    }
+
 	glutDisplayFunc(display);    
 	glutIdleFunc(update);
 	glutMainLoop();

@@ -38,7 +38,16 @@ RayIntersectionResult ContainerObject::intersectObject(Ray ray)
             best = result;
         }        
     }
-    if (useContainerMaterial && best.didCollide()) best.target = this;
+
+    if (useContainerMaterial && best.didCollide()) {
+        // if we set the target to ourselves then getting the uvs won't work later on so we 
+        // eval them here.        
+        if (material->needsUV()) {            
+            best.uv = best.target->getUV(best.local);            
+        }
+        best.target = this;
+        
+    }
     return best;
 }
 

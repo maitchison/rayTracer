@@ -152,7 +152,7 @@ public:
         
         ray.transform(localTransformInv);
         RayIntersectionResult result = intersectObject(ray);
-        if (result.target && result.target->material->needsUV()) {
+        if (result.target && (result.uv.x == 0) && result.target->material->needsUV()) {
             // fetch uv only if required.
             result.uv = result.target->getUV(result.local);
         }

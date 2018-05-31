@@ -10,17 +10,15 @@ RayIntersectionResult Cylinder::intersectObject(Ray ray)
     // we then test the cylinder caps by intersecting two planes and checking them.    
     
     Ray projectedRay(ray);
-    glm::vec3 projectedLocation(location);
-
+    
     projectedRay.dir.y = 0;
     projectedRay.pos.y = 0;
-    projectedLocation.y = 0;
-
+    
     projectedRay.dir = glm::normalize(projectedRay.dir);
 
     float radius2 = radius * radius;
     
-    glm::vec3 vdif = projectedRay.pos - projectedLocation;    
+    glm::vec3 vdif = projectedRay.pos;    
     float b = glm::dot(projectedRay.dir, vdif);
     float len2 = glm::dot(vdif, vdif);
     float c = len2 - radius2;
@@ -32,8 +30,8 @@ RayIntersectionResult Cylinder::intersectObject(Ray ray)
     float t2 = -b + sqrt(delta);
     
     // if points are not on the cylinder ignore them
-    float y1 = ray.pos.y - location.y + ray.dir.y * t1;
-    float y2 = ray.pos.y - location.y + ray.dir.y * t2;
+    float y1 = ray.pos.y - ray.dir.y * t1;
+    float y2 = ray.pos.y - ray.dir.y * t2;
 
     if (y1 < 0 || y1 > height) t1 = -1; 
     if (y2 < 0 || y2 > height) t2 = -1; 
@@ -45,12 +43,12 @@ RayIntersectionResult Cylinder::intersectObject(Ray ray)
        
     // next calculated t3 and t4 which are the intersections with the caps
     if (capped) {
-        float t3 = ray.dir.y == 0 ? -1 : (ray.pos.y - location.y) / -ray.dir.y;
-        float t4 = ray.dir.y == 0 ? -1 : (ray.pos.y - (location.y + height)) / -ray.dir.y;        
+        float t3 = ray.dir.y == 0 ? -1 : (ray.pos.y) / -ray.dir.y;
+        float t4 = ray.dir.y == 0 ? -1 : (ray.pos.y - (height)) / -ray.dir.y;        
         
         // make sure cap points are on the cylinder.
-        if (glm::length2((projectedRay.pos - projectedLocation + projectedRay.dir * t3)) > radius2) t3 = -1;
-        if (glm::length2((projectedRay.pos - projectedLocation + projectedRay.dir * t4)) > radius2) t4 = -1;    
+        if (glm::length2((projectedRay.pos - projectedRay.dir * t3)) > radius2) t3 = -1;
+        if (glm::length2((projectedRay.pos - projectedRay.dir * t4)) > radius2) t4 = -1;    
 
         // now find the closest non negative point of intersection    
         if (t3 > 0 && t3 < t) {
@@ -71,7 +69,7 @@ RayIntersectionResult Cylinder::intersectObject(Ray ray)
     // find normal
     if (glm::dot(normal, normal) == 0) {
         // get normal from main part of cylinder.
-        normal = (ray.pos + ray.dir * t) - location;
+        normal = (ray.pos + ray.dir * t);
         normal.y = 0;
         normal = glm::normalize(normal);
     }
@@ -91,8 +89,7 @@ RayIntersectionResult Cylinder::intersectObject(Ray ray)
  */
 glm::vec2 Cylinder::getUV(glm::vec3 pos)
 {
-	// spherical mapping	
-	pos = (pos - location) / radius;
+	// spherical mapping		
 	float u = 0.5f + (atan2(pos.z, pos.x) / (M_PI * 2));
 	float v = pos.y / height;
 	return glm::vec2(u, v);

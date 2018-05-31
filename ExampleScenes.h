@@ -91,10 +91,10 @@ Material* parameterisedMaterial(int col, int type)
 }
 
 // --------------------------------------------------------------------
-// GIScene
+// GI
+// --------------------------------------------------------------------
 // Simple scene to test GI.
 // --------------------------------------------------------------------
-
 class GIScene : public Scene
 {    
 public:
@@ -134,6 +134,68 @@ public:
 
         // blue sky light
         camera->backgroundColor = Color(0.03,0.05,0.15,1) * 1.0f;	
+    }
+};    
+
+// --------------------------------------------------------------------
+// Basic
+// Simple scene to meet basic requirements of the assignment.
+// --------------------------------------------------------------------
+class BasicScene : public Scene
+{    
+public:
+
+    void loadScene() override {
+
+        name = "Basic";
+
+        add(new Light(glm::vec3(-10,30,0), Color(1.0f,1.0f,1.0f,1)));
+        
+        Sphere* sphere1 = new Sphere(glm::vec3(-15.0, -16.0, -25.0), 4.0);
+        Sphere* sphere2 = new Sphere(glm::vec3(0.0, -5.0, -30.0), 10.0);
+        Sphere* sphere3 = new Sphere(glm::vec3(+15.0, -16.0, -25.0), 4.0);
+
+        sphere1->material->diffuseColor = Color(0.4f,0.4f,0.4f,1.0f);
+        sphere1->material->reflectivity = 0.7f;
+        sphere1->material->reflectionBlur = 0.3f;
+
+        sphere2->material->diffuseColor = Color(0.4f,0.4f,0.4f,1.0f);
+        sphere2->material->reflectivity = 0.7f;
+
+        sphere3->material->diffuseColor = Color(1,0.7,0.6,0.1f);
+        sphere3->material->refractionIndex = 1.1f;                
+
+        Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));                     
+        plane->material = Material::Checkerboard(1.0f);
+        
+        add(plane); 
+        //add(sphere1);     
+        //add(sphere2); 
+        //add(sphere3);     
+
+        // extra objects
+        Cube* cube = new Cube(glm::vec3(-10,-18,-15), glm::vec3(4,4,4));
+        cube->setRotation(glm::vec3(0,2,0));
+        cube->material->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
+        cube->material->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);    
+        cube->material->diffuseColor = Color(1.0f, 0.7f, 0.6f, 1.0f);
+        add(cube);
+
+        Cylinder* cylinder = new Cylinder(glm::vec3(+10,-15,-20), 3.0f, 10.0f);        
+        cylinder->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+        cylinder->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);            
+        add(cylinder);
+
+        Sphere* sphere = new Sphere(glm::vec3(0,-16,-15), 4.0f);        
+        sphere->material->diffuseTexture = new BitmapTexture("./textures/Rough_rock_015_COLOR.png");
+        sphere->material->normalTexture = new BitmapTexture("./textures/Rough_rock_015_NRM.png", true);            
+        add(sphere);
+        
+        camera->setLocation(glm::vec3(0,0,+30));
+        camera->lightingModel = LM_DIRECT;    
+
+        // white sky light
+        camera->backgroundColor = Color(1,1,1,1) * 0.2f;	
     }
 };    
     
