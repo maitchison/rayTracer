@@ -114,8 +114,9 @@ float raySphereIntersection(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 sphere
    
 	if (delta < EPSILON) return 0;
 
-    float t1 = -b - sqrt(delta);
-    float t2 = -b + sqrt(delta);
+    float sqrt_delta = sqrt(delta); // optermizor would have done this for me right?
+    float t1 = -b - sqrt_delta;
+    float t2 = -b + sqrt_delta;
     
     float t = -1;
     

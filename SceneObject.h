@@ -13,6 +13,7 @@
 
 #include "Material.h"
 #include "Ray.h"
+#include "Utils.h"
 #include <glm/glm.hpp>
 
 // forwards
@@ -35,11 +36,7 @@ public:
 
     // surface tangent at the point of collision.
     glm::vec3 tangent;
-
-    // the transformed ray used during intersection test.
-    // note: this probably isn't needed.
-    Ray transformedRay;
-
+    
     // uv co-ords of target at intersection point.
     glm::vec2 uv;
     
@@ -80,9 +77,11 @@ protected:
     glm::vec3 rotation = glm::vec3(0,0,0); // Euler angles
     glm::vec3 scale = glm::vec3(1,1,1);
 
+    // indicates that scene object applies only a simple translation transformation.
+    bool simpleTransform = false;
+
     // radius of objects bounding sphere in local space (i.e. unscaled). 
-    // A negative value disables the sphere bounding optimization.
-    
+    // A negative value disables the sphere bounding optimization.    
     float boundingSphereRadius = -1;
 
     void rebuildTransforms() {
@@ -96,6 +95,7 @@ protected:
         
         localTransformInv = glm::inverse(localTransform);        
 
+        simpleTransform = (glm::length2(rotation)==0.0f && (scale.x==scale.y==scale.z==1.0f));
     }
 
     // local transformation matrix.
@@ -153,25 +153,34 @@ public:
         // Each class must implement the 'intersectObject' method, but can perform all calculations in local
         // space which simplifies things a lot and allows for nested transforms (as we transform the ray not
         // the object)
-        
-        ray.transform(localTransformInv);
+
+        if (simpleTransform) {
+            ray.pos -= location;
+        } else {
+            ray.transform(localTransformInv);
+        }
+
+
         RayIntersectionResult result = intersectObject(ray);
+
         if (result.target && (result.uv.x == 0) && result.target->material->needsUV()) {
             // fetch uv only if required.
             result.uv = result.target->getUV(result.local);
         }
 
-        // transform world coords                    
-        result.location = toParent(glm::vec4(result.location,1));
+
+        if (simpleTransform) {
+            result.location += location;
+        } else {
+            // transform world coords                    
+            result.location = toParent(glm::vec4(result.location,1));
+            
+            //note: this is not the proper transform.  It should be something to do with the inverse transpose,
+            //if the objects scale is set to non uniform this this will be wrong.
+            result.normal = glm::normalize(toParent(glm::vec4(result.normal,0)));
+            result.tangent = glm::normalize(toParent(glm::vec4(result.tangent,0)));            
+        }
         
-        //note: this is not the proper transform.  It should be something to do with the inverse transpose,
-        //if the objects scale is set to non uniform this this will be wrong.
-        result.normal = glm::normalize(toParent(glm::vec4(result.normal,0)));
-        result.tangent = glm::normalize(toParent(glm::vec4(result.tangent,0)));
-
-        // we may need to know something about the transformed ray
-        result.transformedRay = ray;
-
         return result;
     }
 

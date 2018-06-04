@@ -76,7 +76,7 @@ int counter = 0;
 int frameOn = 0;
 
 int render_mode = RM_LQ;
-int initialScene = 1;
+int initialScene = 6;
 
 int passes = 0;
 
@@ -169,6 +169,9 @@ void keyboard(unsigned char key, int x, int y)
     }
 }
 
+float totalTimeTaken = 0.0f;
+int totalPixelsRendered = 0;
+
 void update(void)
 {    
 
@@ -221,7 +224,9 @@ void update(void)
 	}
 	
 	float timeTaken = float(clock() - t) / CLOCKS_PER_SEC;	
-	float pixelsPerSecond = (timeTaken == 0) ? -1 : pixelsRendered / timeTaken;
+	totalTimeTaken += timeTaken;
+    totalPixelsRendered += pixelsRendered;
+    float pixelsPerSecond = (totalTimeTaken == 0) ? -1 : totalPixelsRendered / totalTimeTaken;
 	if (counter == 10) {
 		printf("Pixels per second = %d.\n", (int)(pixelsPerSecond));
 	}

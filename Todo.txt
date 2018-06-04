@@ -41,11 +41,12 @@ Feature list:
 [*] F1-F7 control lighting model.
 [*] Scene: dragon
 [*] Scene: many dragons
+[*] in render and exit mode disable keypresses...
 
 Todo:
 
+[ ] auto clustering of scene objects (use same subdivision algorithm)
 [ ] print should not reset render
-[ ] in render and exit mode disable keypresses...
 
 
 Bugs:

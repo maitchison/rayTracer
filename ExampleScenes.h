@@ -334,7 +334,7 @@ public:
         //Cube* dragon = new Cube(glm::vec3(0,1,0),glm::vec3(0.5)); 
 
         const int NUM_OBJECTS_X = 15;
-        const int NUM_OBJECTS_Y = 15;
+        const int NUM_OBJECTS_Y = 19;
         
         // duplicate dragons
         for (int i = 0; i < NUM_OBJECTS_X; i++) {
@@ -359,7 +359,7 @@ public:
             }    
         }
                     
-        camera->lightingModel = LM_DIRECT; // gi looks way better, but is slow :(
+        camera->lightingModel = LM_GI; // gi looks way better, but is slow :(
 
         //camera->setLocation(glm::vec3(0,7.6,16.3));
         //camera->setLocation(glm::vec3(0,1.56,9.36));

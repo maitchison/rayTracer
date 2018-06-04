@@ -195,7 +195,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             // essentially we use using the diffuse lighting model only here.  for specular it's better to just
             // set some reflectivty (+ blur if you like)
             
-            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/GI_SAMPLES) * diffusePower);
+            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/GI_SAMPLES) * sqrtDiffusePower);
         }
         
     }
@@ -257,79 +257,80 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
 	return color;
 }
 
+void Camera::renderPixel(Scene* scene, int pixel)
+{        
+
+    float aspectRatio = float(SCREEN_WIDTH / SCREEN_HEIGHT);            
+
+    int x = pixel % SCREEN_WIDTH;
+    int y = pixel / SCREEN_WIDTH;        
+
+    if (lqMode && ((x&1==1) || (y&1==1))) {
+        return;
+    }
+    
+    Color outputCol = Color(0, 0, 0, 1);
+
+    int requiredSamples = (superSample == 0 ? 1 : superSample);
+
+    for (int j = 0; j < requiredSamples; j++) {        
+        float jitterx = (superSample == 0) ? 0.5 : randf();
+        float jittery = (superSample == 0) ? 0.5 : randf();
+
+        // find the rays direction
+        float rx = (2 * ((x + jitterx) / SCREEN_WIDTH) - 1) * tan(fov / 2 * M_PI / 180) * aspectRatio;
+        float ry = (1 - 2 * ((y + jittery) / SCREEN_HEIGHT)) * tan(fov / 2 * M_PI / 180);
+        glm::vec3 dir = glm::normalize(glm::vec3(rx, -ry, -1));
+
+        // apply camera tranform
+        dir = toParent(glm::vec4(dir.x, dir.y, dir.z, 0.0));
+
+        // defocus
+        if (defocusBlur > EPSILON) {
+            dir = defocus(dir, defocusBlur);
+        }
+        
+        Ray ray = Ray(location, dir);
+        Color col = trace(ray, scene, 0, (lightingModel == LM_GI) ? GI_SAMPLES : 0);
+        outputCol = outputCol + (col * (1.0f/requiredSamples));
+    }
+            
+    // higher weight for more samples.
+
+    if (lqMode) {
+        // render 2x2 block
+        gfx.addSample(x+1, y, outputCol, 0.01f + superSample);        
+        gfx.addSample(x, y+1, outputCol, 0.01f + superSample);        
+        gfx.addSample(x+1, y+1, outputCol, 0.01f + superSample);        
+    } else {
+        // show where we are up to.
+        gfx.putPixel(x, y+1, Color(0,0,0,1), true);            
+        gfx.putPixel(x, y+2, Color(1,1,1,1), true);                
+    }
+
+    gfx.addSample(x, y, outputCol, 0.01f + superSample);                                	
+}
+
 /** Renders given number of pixels before returning control. */
 int Camera::render(Scene* scene, int pixels, bool autoReset)
 {	
-	int totalPixels = SCREEN_WIDTH * SCREEN_HEIGHT;
-	float aspectRatio = float(SCREEN_WIDTH / SCREEN_HEIGHT);
+	int totalPixels = SCREEN_WIDTH * SCREEN_HEIGHT;	
 
 	if (pixels == -1) {
 		pixels = totalPixels - pixelOn;
 	}
 	
 	int pixelsDone = 0;
+
+    if (pixelOn+pixels > totalPixels) {
+        pixels = totalPixels - pixelOn;
+    }
+
+    for (int i = 0; i < pixels; i++) {
+        renderPixel(scene, pixelOn+i);
+    }
     
-	for (int i = 0; i < pixels; i++) {
-
-		pixelOn++;		
-
-		if (pixelOn >= totalPixels)
-		{
-			// reset.
-			if (autoReset) pixelOn = 0;
-			return i;
-		}
-
-		int x = pixelOn % SCREEN_WIDTH;
-		int y = pixelOn / SCREEN_WIDTH;        
-
-        if (lqMode && ((x&1==1) || (y&1==1))) {
-            continue;
-        }
-		
-		Color outputCol = Color(0, 0, 0, 1);
-
-        int requiredSamples = (superSample == 0 ? 1 : superSample);
-
-		for (int j = 0; j < requiredSamples; j++) {        
-			float jitterx = (superSample == 0) ? 0.5 : randf();
-			float jittery = (superSample == 0) ? 0.5 : randf();
-
-			// find the rays direction
-			float rx = (2 * ((x + jitterx) / SCREEN_WIDTH) - 1) * tan(fov / 2 * M_PI / 180) * aspectRatio;
-			float ry = (1 - 2 * ((y + jittery) / SCREEN_HEIGHT)) * tan(fov / 2 * M_PI / 180);
-			glm::vec3 dir = glm::normalize(glm::vec3(rx, -ry, -1));
-
-            // apply camera tranform
-            dir = toParent(glm::vec4(dir.x, dir.y, dir.z, 0.0));
-
-            // defocus
-            if (defocusBlur > EPSILON) {
-                dir = defocus(dir, defocusBlur);
-            }
-			
-			Ray ray = Ray(location, dir);
-			Color col = trace(ray, scene, 0, (lightingModel == LM_GI) ? GI_SAMPLES : 0);
-			outputCol = outputCol + (col * (1.0f/requiredSamples));
-		}
-				
-        // higher weight for more samples.
-
-        if (lqMode) {
-            // render 2x2 block
-            gfx.addSample(x+1, y, outputCol, 0.01f + superSample);        
-            gfx.addSample(x, y+1, outputCol, 0.01f + superSample);        
-            gfx.addSample(x+1, y+1, outputCol, 0.01f + superSample);        
-        } else {
-            // show where we are up to.
-            gfx.putPixel(x, y+1, Color(0,0,0,1), true);            
-            gfx.putPixel(x, y+2, Color(1,1,1,1), true);                
-        }
-
-        gfx.addSample(x, y, outputCol, 0.01f + superSample);                        
-        
-		pixelsDone++;
-
-	}
-	return pixelsDone; 
+    pixelOn += pixels;
+	
+	return pixels; 
 }

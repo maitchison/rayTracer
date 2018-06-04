@@ -45,6 +45,9 @@ protected:
     // a bit of a hack, but this is the intersection result from the last call to 'trace'.
     // idealy I'd return this and the color from the trace function in some kind of struct.
     RayIntersectionResult lastTraceIntersection;
+
+    // render a single pixel
+    void renderPixel(Scene* scene, int pixel);
     
 public:
 
