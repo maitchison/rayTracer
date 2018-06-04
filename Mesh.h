@@ -60,7 +60,7 @@ protected:
                 delta[j] = _max[j]-_min[j];
             }
 
-            // find which access to divide on
+            // find which axis to divide on
             int dim = 0;
             if (delta[0] > delta[1] && delta[0] > delta[2]) {
                 dim = 0;                
@@ -128,6 +128,8 @@ protected:
             return;
 
         }    
+
+        // the base case, just add the triangles to the object and calculate a bounding radius.        
 
         int faces = vertices->size() / 3;
         boundingSphereRadius = -1;

@@ -214,9 +214,9 @@ void update(void)
 			pixelsRendered = camera->render(currentScene, 5 * 100, false);
 			if (pixelsRendered == 0) {
                 passes++;
-                if (mode == RM_RENDER_AND_EXIT && passes >= requiredPasses) {
-                    gfx.screenshot(currentScene->name+".tga");
-                    exit(0);
+                if (mode == RM_RENDER_AND_EXIT) {
+                    gfx.screenshot(currentScene->name+".tga");                    
+                    if (passes >= requiredPasses) exit;
                 }
                 camera->reset();				
 			}
@@ -257,6 +257,8 @@ void initialize()
     scenes.push_back(new DragonScene());        
     scenes.push_back(new ManyDragonsScene());        
     scenes.push_back(new AreaLightScene());        
+    scenes.push_back(new MillionCubes());        
+    
     
     activateScene(initialScene);
 

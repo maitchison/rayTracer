@@ -302,6 +302,67 @@ public:
 };
 
 // --------------------------------------------------------------------
+// Million Cubes
+// --------------------------------------------------------------------
+// This scene contains 1,000,000 cubes, and demonstrates the auto clustering
+// algorithm for large numbers of scene objects. 
+// --------------------------------------------------------------------
+class MillionCubes : public Scene
+{    
+public:
+
+    void loadScene() override {
+    
+        name = "MillionCubes";
+
+        // default light
+        add(new Light(glm::vec3(-10,30,0), 0.5f*Color(1,1,1,1)));    
+        
+        // ground plane
+        Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
+        add(plane); 
+
+        
+        const int NUM_OBJECTS_X = 10;
+        const int NUM_OBJECTS_Y = 10;
+        const int NUM_OBJECTS_Z = 10;
+        
+        // generate some cubes
+        for (int i = 0; i < NUM_OBJECTS_X; i++) {
+            for (int j = 0; j < NUM_OBJECTS_Y; j++) {
+                for (int k = 0; k < NUM_OBJECTS_Z; k++) {
+                    Cube* cube = new Cube(glm::vec3(i-(NUM_OBJECTS_X/2),j+2,k+5), glm::vec3(0.5f,0.5f,0.5f));                    
+                    cube->setRotation(glm::vec3(randf(),randf(), randf()));
+                    add(cube);
+                }
+            }    
+        }
+
+        // some light sources for GI
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                Cylinder* lightSphere = new Cylinder(glm::vec3(((i*2)-1)*8,0,((j*2)-1)*8),1.1,3);
+                lightSphere->material = parameterisedMaterial(4+i+j*2, 2);
+                lightSphere->material->diffuseColor *= 5.0; // make them bright :)
+                add(lightSphere);
+            }    
+        }
+
+        // a bit experimental, but try the auto clustering algorithm
+        this->cluster(true);
+
+        camera->lightingModel = LM_GI; // gi looks way better, but is slow :(
+
+        camera->setLocation(glm::vec3(0,4.08,18.21));
+        camera->setRotation(glm::vec3(0,0,0));
+
+        // blue sky light
+        camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
+    }
+};
+
+
+// --------------------------------------------------------------------
 // 100 dragons
 // --------------------------------------------------------------------
 // This scene contains 100 dragons each with 800k triangles (that is 80 million trianges).
@@ -350,26 +411,27 @@ public:
         }
 
         // some light sources for GI
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 2; j++) {
-                Cylinder* lightSphere = new Cylinder(glm::vec3(((i*2)-1)*8,0,((j*2)-1)*8),1.1,3);
-                lightSphere->material = parameterisedMaterial(4+i+j*2, 2);
-                lightSphere->material->diffuseColor *= 5.0; // make them bright :)
-                add(lightSphere);
-            }    
-        }
-                    
+        Cube* light1 = new Cube(glm::vec3(-3,0,0), glm::vec3(0.6,1,100));
+        light1->material = parameterisedMaterial(5, 2);        
+        add(light1);
+        Cube* light2 = new Cube(glm::vec3(+3,0,0), glm::vec3(0.6,1,100));
+        light2->material = parameterisedMaterial(6, 2);        
+        add(light2);
+
+        // a bit experimental, but try the auto clustering algorithm
+        this->cluster();
+
+
         camera->lightingModel = LM_GI; // gi looks way better, but is slow :(
 
         //camera->setLocation(glm::vec3(0,7.6,16.3));
         //camera->setLocation(glm::vec3(0,1.56,9.36));
         //camera->setLocation(glm::vec3(0,2.65,15.58));
-        camera->setLocation(glm::vec3(0,4.08,18.21));
+        camera->setLocation(glm::vec3(0,1.44,19.64));
         camera->setRotation(glm::vec3(-0.5,0,0));
 
-
         // blue sky light
-        camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
+        camera->backgroundColor = Color(0.03,0.05,0.10,1) * 1.0f;
     }
 };
 

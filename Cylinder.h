@@ -29,6 +29,7 @@ public:
 	{
         this->radius = radius;
         this->height = height;      
+        this->boundingSphereRadius = maxf(radius, height*2);
 	};
 	
 	RayIntersectionResult intersectObject(Ray ray) override;

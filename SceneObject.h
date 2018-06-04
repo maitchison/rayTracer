@@ -78,7 +78,7 @@ protected:
     glm::vec3 scale = glm::vec3(1,1,1);
 
     // indicates that scene object applies only a simple translation transformation.
-    bool simpleTransform = false;
+    bool simpleTransform = true;
 
     // radius of objects bounding sphere in local space (i.e. unscaled). 
     // A negative value disables the sphere bounding optimization.    
@@ -106,17 +106,25 @@ protected:
 
 public:
 
-    void setLocation(glm::vec3 location) {
+    inline void setLocation(glm::vec3 location) {
         this->location = location;
         rebuildTransforms();
     }
 
-    void setRotation(glm::vec3 rotation) {
+    inline void setRotation(glm::vec3 rotation) {
         this->rotation = rotation;
         rebuildTransforms();
     }
 
-    void setScale(glm::vec3 scale) {
+    inline float getRadius() {
+        return this->boundingSphereRadius;        
+    }
+
+    inline void setRadius(float radius) {
+        boundingSphereRadius = radius;
+    }
+
+    inline void setScale(glm::vec3 scale) {
         if (scale.x == 0 || scale.y == 0 || scale.z == 0) {
             printf("WARNING: Invalid transform.  Scale = 0.");
             return;
