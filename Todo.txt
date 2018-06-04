@@ -42,10 +42,13 @@ Feature list:
 [*] Scene: dragon
 [*] Scene: many dragons
 [*] in render and exit mode disable keypresses...
+[*] auto clustering of scene objects (not super fast, but helps a bit)
 
 Todo:
 
-[ ] auto clustering of scene objects (use same subdivision algorithm)
+[ ] get running on windows
+[ ] profile on windows
+[ ] multi thread
 [ ] print should not reset render
 
 

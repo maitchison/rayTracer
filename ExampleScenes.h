@@ -421,7 +421,6 @@ public:
         // a bit experimental, but try the auto clustering algorithm
         this->cluster();
 
-
         camera->lightingModel = LM_GI; // gi looks way better, but is slow :(
 
         //camera->setLocation(glm::vec3(0,7.6,16.3));

@@ -214,8 +214,9 @@ void update(void)
 			pixelsRendered = camera->render(currentScene, 5 * 100, false);
 			if (pixelsRendered == 0) {
                 passes++;
+                printf(">>>> Pass %d\n", passes);
                 if (mode == RM_RENDER_AND_EXIT) {
-                    gfx.screenshot(currentScene->name+".tga");                    
+                    gfx.screenshot(currentScene->name+"_"+std::to_string(passes)+".tga");                    
                     if (passes >= requiredPasses) exit;
                 }
                 camera->reset();				

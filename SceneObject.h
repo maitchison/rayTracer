@@ -69,8 +69,10 @@ public:
     };
 };
 
+
 class SceneObject
 {
+
 protected:
     // our local transforms
     glm::vec3 location = glm::vec3(0,0,0);
@@ -150,7 +152,7 @@ public:
         this->setLocation(location);
         this->material = new Material();
     }
-    
+        
     /** Transforms ray into local space then intersects with object. */
     RayIntersectionResult intersect(Ray ray) {
         
@@ -161,13 +163,15 @@ public:
         // Each class must implement the 'intersectObject' method, but can perform all calculations in local
         // space which simplifies things a lot and allows for nested transforms (as we transform the ray not
         // the object)
+        
+        static int RAYS_SIMPLE = 0;
+        static int RAYS_COMPLEX = 0;
 
-        if (simpleTransform) {
+        if (simpleTransform) {            
             ray.pos -= location;
         } else {
             ray.transform(localTransformInv);
         }
-
 
         RayIntersectionResult result = intersectObject(ray);
 

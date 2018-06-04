@@ -319,18 +319,16 @@ int Camera::render(Scene* scene, int pixels, bool autoReset)
 	if (pixels == -1) {
 		pixels = totalPixels - pixelOn;
 	}
-	
-	int pixelsDone = 0;
-
+		
     if (pixelOn+pixels > totalPixels) {
-        pixels = totalPixels - pixelOn;
-    }
+        pixels = totalPixels - pixelOn - 1;
+    }    
 
     for (int i = 0; i < pixels; i++) {
         renderPixel(scene, pixelOn+i);
     }
     
     pixelOn += pixels;
-	
+    
 	return pixels; 
 }
