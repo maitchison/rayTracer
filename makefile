@@ -6,6 +6,9 @@ CC=g++
 # 'experimental' levels of optimization :)
 CC_FLAGS=-std=c++11 -Ofast -floop-nest-optimize -floop-parallelize-all
 
+# for debuging
+#CC_FLAGS=-std=c++11 -O3 -g
+
 #LINK_FLAGS=-framework GLUT -framework OpenGL
 LINK_FLAGS=-lm -lGL -lGLU -lglut
 

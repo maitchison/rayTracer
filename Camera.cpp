@@ -178,6 +178,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             diffusePower = sqrtDiffusePower;
             
             Ray giRay = Ray(intersection.location + rayDir * OFFSET_BIAS, rayDir);            
+            giRay.giRay = true; //enable some optimizatoins.
             
             // We then test the color of this ray.  
             // We set giSamples to 1 if gi was enabled, and 0 otherwise, this gives a 2 bounce lighting model.            

@@ -12,11 +12,22 @@ void ContainerObject::add(SceneObject* object)
 
 RayIntersectionResult ContainerObject::intersectObject(Ray ray)
 {
-    // test our sphere bounds first (much faster for larger containers)
-    if (!this->sphereBoundsTest(ray)) {
-        return RayIntersectionResult::NoCollision();
-    } 
-    
+
+    if (boundingSphereRadius > 0) {
+        float t = raySphereIntersection(ray.pos, ray.dir, glm::vec3(0,0,0), boundingSphereRadius);
+
+        // big hack, use bounds if we are far away.  Should be fine for GI rays.
+        if (ray.giRay && t > boundingSphereRadius*10.0f) {
+            glm::vec3 local = (ray.pos + ray.dir * t);
+            glm::vec3 normal = glm::normalize(local);
+            return RayIntersectionResult(this, t, local, normal, normal);
+        }
+        // test our sphere bounds first (much faster for larger containers)
+        if (t<=0) {
+            return RayIntersectionResult::NoCollision();
+        } 
+    }
+        
     RayIntersectionResult best = RayIntersectionResult();    
 
     if (showBounds) {

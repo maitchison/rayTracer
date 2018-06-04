@@ -377,7 +377,7 @@ public:
         name = "ManyDragons";
 
         // default light
-        add(new Light(glm::vec3(-10,30,0), 0.5f*Color(1,1,1,1)));    
+        add(new Light(glm::vec3(0,5.26,14.12), 0.5f*Color(1,1,1,1)));    
         
         // ground plane
         Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
@@ -394,8 +394,8 @@ public:
         //Sphere* dragon = new Sphere(glm::vec3(0,1.0,0),0.5); 
         //Cube* dragon = new Cube(glm::vec3(0,1,0),glm::vec3(0.5)); 
 
-        const int NUM_OBJECTS_X = 15;
-        const int NUM_OBJECTS_Y = 19;
+        const int NUM_OBJECTS_X = 11;
+        const int NUM_OBJECTS_Y = 11;
         
         // duplicate dragons
         for (int i = 0; i < NUM_OBJECTS_X; i++) {
@@ -403,19 +403,44 @@ public:
                 // rather than creating new dragons (which would repartition them and load the mesh into memory again)
                 // we can instead create copies of them with the ReferenceObject type.  This allows for a copy of 
                 // the origional object, but with a new transform applied.
-                ReferenceObject* dragonCopy = new ReferenceObject(glm::vec3((i-(NUM_OBJECTS_X/2))*2,-0.5,(j-(NUM_OBJECTS_Y/2))*2), dragon);
-                dragonCopy->setRotation(glm::vec3(0, (randf()-0.5f)*PI*0.2f + (0.4f*PI), 0));
-                dragonCopy->material = parameterisedMaterial(i+(j*3), 0);                
+                if (i-(NUM_OBJECTS_X/2) == 2 || (i-(NUM_OBJECTS_X/2) == -2)) {
+                    // don't block the light                
+                    continue;
+                }
+                ReferenceObject* dragonCopy = new ReferenceObject(glm::vec3((i-(NUM_OBJECTS_X/2))*1.2,-0.5,(j-(NUM_OBJECTS_Y/2))*2), dragon);
+                dragonCopy->setRotation(glm::vec3(0, (randf()-0.5f)*PI*0.3f + (0.4f*PI), 0));
+                //dragonCopy->material = parameterisedMaterial(i+(j*3), 0);                
                 add(dragonCopy); 
             }    
         }
 
+        // back mirror
+        Cube* backPlane = new Cube(glm::vec3(0,0,-15), glm::vec3(21,15,2));
+        backPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
+        //backPlane->material->reflectionBlur = 0.02f;
+        backPlane->setRadius(99);
+        add(backPlane);
+        Cube* leftPlane = new Cube(glm::vec3(-10,0,0), glm::vec3(2,15,30));
+        leftPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
+        //leftPlane->material->reflectionBlur = 0.02f;
+        leftPlane->setRadius(99);
+        add(leftPlane);
+        Cube* rightPlane = new Cube(glm::vec3(+10,0,0), glm::vec3(2,15,30));
+        rightPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
+        //rightPlane->material->reflectionBlur = 0.02f;
+        rightPlane->setRadius(99);
+        add(rightPlane);
+
+        
+
         // some light sources for GI
-        Cube* light1 = new Cube(glm::vec3(-3,0,0), glm::vec3(0.6,1,100));
+        Cube* light1 = new Cube(glm::vec3(-2.5,0,0), glm::vec3(0.6,0.5,20));
         light1->material = parameterisedMaterial(5, 2);        
+        light1->setRotation(glm::vec3(0,0,PI/4));
         add(light1);
-        Cube* light2 = new Cube(glm::vec3(+3,0,0), glm::vec3(0.6,1,100));
+        Cube* light2 = new Cube(glm::vec3(+2.5,0,0), glm::vec3(0.6,0.5,20));
         light2->material = parameterisedMaterial(6, 2);        
+        light2->setRotation(glm::vec3(0,0,PI/4));
         add(light2);
 
         // a bit experimental, but try the auto clustering algorithm
@@ -426,11 +451,12 @@ public:
         //camera->setLocation(glm::vec3(0,7.6,16.3));
         //camera->setLocation(glm::vec3(0,1.56,9.36));
         //camera->setLocation(glm::vec3(0,2.65,15.58));
-        camera->setLocation(glm::vec3(0,1.44,19.64));
+        camera->setLocation(glm::vec3(0,5.26,14.12));
         camera->setRotation(glm::vec3(-0.5,0,0));
+        camera->move(-2,0,0);
 
         // blue sky light
-        camera->backgroundColor = Color(0.03,0.05,0.10,1) * 1.0f;
+        camera->backgroundColor = Color(0.03,0.05,0.10,1) * 2.0f;
     }
 };
 

@@ -15,6 +15,8 @@ public:
 
     // If true ray is tracing a shadow.
     bool shadowTrace = false;
+    // This is a global illuminaton ray trace.
+    bool giRay = false;
     
     Ray()
 	{
