@@ -14,6 +14,11 @@ RayIntersectionResult ContainerObject::intersectObject(Ray ray)
 {
 
     if (boundingSphereRadius > 0) {
+
+		// this doesn't seem to help much yet, I think it's because we are copying ray so 
+		// the best.t gets lost too oftn.
+		if (boundingSphereRadius > ray.length) RayIntersectionResult::NoCollision();
+		
         float t = raySphereIntersection(ray.pos, ray.dir, glm::vec3(0,0,0), boundingSphereRadius);
 
         // big hack, use bounds if we are far away.  Should be fine for GI rays.
@@ -30,11 +35,11 @@ RayIntersectionResult ContainerObject::intersectObject(Ray ray)
         
     RayIntersectionResult best = RayIntersectionResult();    
 
-    if (showBounds) {
+    if (showBounds) {		
         best.t = raySphereIntersection(ray.pos, ray.dir, glm::vec3(0,0,0), boundingSphereRadius);
         best.local = best.location = ray.pos + ray.dir * best.t;
         best.target = this;
-        best.normal = glm::normalize(location - best.location);
+        best.normal = glm::normalize(location - best.location);		
         return best;
     }
 
@@ -47,6 +52,7 @@ RayIntersectionResult ContainerObject::intersectObject(Ray ray)
 
         if (result.didCollide() && (result.t < best.t || !best.didCollide())) {
             best = result;
+			ray.length = best.t;
         }        
     }
 

@@ -23,11 +23,11 @@ const int SCREEN_HEIGHT = 1440 / 4;
 class GFX
 {
 	
-	uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+	uint32_t* buffer = new uint32_t[SCREEN_HEIGHT*SCREEN_WIDTH];
 
     // stores acculated color, where the total weight is recorded in the alpha chanel.
     // for example the color 10,5,1,10 has a color of (1.0, 0.5, 0.1) and 10 samples.
-    Color sampleBuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+    Color* sampleBuffer = new Color[SCREEN_HEIGHT*SCREEN_WIDTH];
 
 	GLuint tex;
 
@@ -40,7 +40,7 @@ public:
         const char *cstr = filename.c_str();
         updateBuffer();
         printf("Saving screenshot %s\n", cstr);
-        write_truecolor_tga(cstr, *buffer, SCREEN_WIDTH, SCREEN_HEIGHT);
+        write_truecolor_tga(cstr, buffer, SCREEN_WIDTH, SCREEN_HEIGHT);
     }
 	void blit();    
 	void init(void);

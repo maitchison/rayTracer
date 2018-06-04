@@ -13,6 +13,10 @@ public:
     glm::vec3 pos;	//The source point of the ray
 	glm::vec3 dir;	//The unit direction of the ray
 
+	// how far the ray can travel before it should be ignored.
+	float length = FP_INFINITE;
+
+
     // If true ray is tracing a shadow.
     bool shadowTrace = false;
     // This is a global illuminaton ray trace.

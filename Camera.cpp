@@ -140,7 +140,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
     Color specularLight = Color(0,0,0,1);
     // we only need to look a the lights in direct lighting mode (ignore them in GI mode.)
     if (lightingModel == LM_DIRECT) {
-        for (int i = 0; i < scene->lights.size(); i++) {        
+        for (int i = 0; i < (int)scene->lights.size(); i++) {        
             calculateLighting(intersection, scene, scene->lights[i], ambientLight, diffuseLight, specularLight);        
         }
     }
@@ -266,7 +266,7 @@ void Camera::renderPixel(Scene* scene, int pixel)
     int x = pixel % SCREEN_WIDTH;
     int y = pixel / SCREEN_WIDTH;        
 
-    if (lqMode && ((x&1==1) || (y&1==1))) {
+    if (lqMode && (((x&1)==1) || ((y&1)==1))) {
         return;
     }
     
@@ -275,12 +275,12 @@ void Camera::renderPixel(Scene* scene, int pixel)
     int requiredSamples = (superSample == 0 ? 1 : superSample);
 
     for (int j = 0; j < requiredSamples; j++) {        
-        float jitterx = (superSample == 0) ? 0.5 : randf();
-        float jittery = (superSample == 0) ? 0.5 : randf();
+        float jitterx = (superSample == 0) ? 0.5f : randf();
+        float jittery = (superSample == 0) ? 0.5f : randf();
 
         // find the rays direction
-        float rx = (2 * ((x + jitterx) / SCREEN_WIDTH) - 1) * tan(fov / 2 * M_PI / 180) * aspectRatio;
-        float ry = (1 - 2 * ((y + jittery) / SCREEN_HEIGHT)) * tan(fov / 2 * M_PI / 180);
+        float rx = (2 * ((x + jitterx) / SCREEN_WIDTH) - 1) * tan(fov / 2 * PI / 180) * aspectRatio;
+        float ry = (1 - 2 * ((y + jittery) / SCREEN_HEIGHT)) * tan(fov / 2 * PI / 180);
         glm::vec3 dir = glm::normalize(glm::vec3(rx, -ry, -1));
 
         // apply camera tranform
@@ -325,6 +325,10 @@ int Camera::render(Scene* scene, int pixels, bool autoReset)
         pixels = totalPixels - pixelOn - 1;
     }    
 
+	#pragma loop(hint_parallel(8))  
+	//#pragma loop(ivdep) // ivdep will force this through. 
+	// would be better to render to independant blocks or lines, then write them through after the render... would also be interesting to see what the data dependancy is?  
+	// GFX buffer would be one, ray stats another...
     for (int i = 0; i < pixels; i++) {
         renderPixel(scene, pixelOn+i);
     }

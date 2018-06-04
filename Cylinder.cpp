@@ -22,7 +22,7 @@ RayIntersectionResult Cylinder::intersectObject(Ray ray)
 
     // intersect with circle
     float a = glm::length2(projectedRay.dir);
-    float b = 2.0 * glm::dot(projectedRay.dir, projectedRay.pos);
+    float b = 2.0f * glm::dot(projectedRay.dir, projectedRay.pos);
     float c = glm::length2(projectedRay.pos) - radius2;
 
     float det = b*b - (4 * a * c);
@@ -96,7 +96,7 @@ RayIntersectionResult Cylinder::intersectObject(Ray ray)
 glm::vec2 Cylinder::getUV(glm::vec3 pos)
 {
 	// spherical mapping		
-	float u = 0.5f + (atan2(pos.z, pos.x) / (M_PI * 2));
+	float u = 0.5f + (atan2(pos.z, pos.x) / (PI * 2));
 	float v = pos.y / height;
 	return glm::vec2(u, v);
 }

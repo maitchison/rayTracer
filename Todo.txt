@@ -42,13 +42,18 @@ Feature list:
 [*] Scene: dragon
 [*] Scene: many dragons
 [*] in render and exit mode disable keypresses...
+----------- (assignment finished) --------------
 [*] auto clustering of scene objects (not super fast, but helps a bit)
+[*] get running on windows
+[*] profile on windows
+[*] multi thread
+
 
 Todo:
 
-[ ] get running on windows
-[ ] profile on windows
-[ ] multi thread
+[ ] use *Ray instead of ray, and keep intersection result in the ray (fast to not copy, plus we get the intersection t value )
+[ ] put sphere bounds test in SceneObject (test by default with ray max length), also allow this the sphere to be disabled
+[ ] add cube bounds test (faster for many objects I think? as it gives a tigher bound)
 [ ] print should not reset render
 
 

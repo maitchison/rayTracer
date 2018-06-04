@@ -39,9 +39,9 @@ glm::vec3 TextureBMP::getColorAt(float s, float t)
 	if(g < 0) g += 255;
 	if(b < 0) b += 255;
  
-    float rn = (float)r / 255.0;  //Normalized colour values
-    float gn = (float)g / 255.0;
-    float bn = (float)b / 255.0;
+    float rn = (float)r / 255.0f;  //Normalized colour values
+    float gn = (float)g / 255.0f;
+    float bn = (float)b / 255.0f;
     return glm::vec3(rn, gn, bn);
 }
 

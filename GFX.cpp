@@ -19,9 +19,9 @@ void GFX::putPixel(int x, int y, Color col, bool shallow)
 {
     if (!inBounds(x,y)) return;
     if (shallow) {
-        buffer[y][x] = colorToInt24(col);
+        buffer[y*SCREEN_WIDTH + x] = colorToInt24(col);
     } else {
-	    sampleBuffer[y][x] = Color(0,0,0,0);
+	    sampleBuffer[y*SCREEN_WIDTH+x] = Color(0,0,0,0);
         addSample(x,y,col);
     }
 }
@@ -33,7 +33,7 @@ void GFX::updateBuffer()
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
             {
-                buffer[y][x] = colorToInt24(sampleBuffer[y][x] / sampleBuffer[y][x].a);
+                buffer[y*SCREEN_WIDTH + x] = colorToInt24(sampleBuffer[y*SCREEN_WIDTH + x] / sampleBuffer[y*SCREEN_WIDTH + x].a);
             }
         }
     }
@@ -45,8 +45,8 @@ void GFX::addSample(int x, int y, Color col, float weight)
 {
 	if (!inBounds(x,y) || weight == 0.0f) return;
 	col.a = 1.0f;
-    sampleBuffer[y][x] += (col*weight);
-	buffer[y][x] = colorToInt24(sampleBuffer[y][x] / sampleBuffer[y][x].a);
+    sampleBuffer[y*SCREEN_WIDTH + x] += (col*weight);
+	buffer[y*SCREEN_WIDTH + x] = colorToInt24(sampleBuffer[y*SCREEN_WIDTH + x] / sampleBuffer[y*SCREEN_WIDTH + x].a);
 }
 
 void GFX::clear(Color col, bool shallow)
@@ -56,8 +56,8 @@ void GFX::clear(Color col, bool shallow)
 	for (int y = 0; y < SCREEN_HEIGHT; y++) {
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
             if (!shallow)
-			    buffer[y][x] = c;
-            sampleBuffer[y][x] = col;
+			    buffer[y*SCREEN_WIDTH + x] = c;
+            sampleBuffer[y*SCREEN_WIDTH + x] = col;
 		}
 	}
 }
@@ -109,12 +109,12 @@ void GFX::init(void)
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
 			int cell = ((x / 8) + (y / 8)) % 2;
 			float v = 0.5f + cell * 0.5f;
-			buffer[y][x] = colorToInt24(Color(v, v, v, 1.0));
+			buffer[y*SCREEN_WIDTH + x] = colorToInt24(Color(v, v, v, 1.0));
 		}
 	}
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	glBindTexture(GL_TEXTURE_2D, 0);

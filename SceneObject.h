@@ -97,7 +97,7 @@ protected:
         
         localTransformInv = glm::inverse(localTransform);        
 
-        simpleTransform = (glm::length2(rotation)==0.0f && (scale.x==scale.y==scale.z==1.0f));
+        simpleTransform = (glm::length2(rotation)==0 && (scale.x==scale.y==scale.z==1));
     }
 
     // local transformation matrix.

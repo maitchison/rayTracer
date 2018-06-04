@@ -5,6 +5,9 @@
 *=========================================================================
 */
 
+// make sure GFX loads first
+#include "GFX.h"
+
 #include <stdio.h>
 
 #include <iostream>
@@ -13,7 +16,6 @@
 #include <sstream>
 
 #include <glm/glm.hpp>
-#include <GL/glut.h>
 
 #include "SceneObject.h"
 #include "ContainerObject.h"
@@ -29,8 +31,8 @@
 #include "ExampleScenes.h"
 
 #include "Camera.h"
-#include "GFX.h"
 #include "PLYReader.h"
+#include "time.h"
 
 #include "math.h"
 
@@ -179,7 +181,7 @@ void update(void)
     if (currentScene == NULL || camera == NULL)
         return;
 
-    currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;	
+    currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;	
 	float elapsed = currentTime - lastFrameTime;
 
 	if (elapsed < (0.5 / 1000.0)) {

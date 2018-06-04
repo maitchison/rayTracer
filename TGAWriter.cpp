@@ -6,7 +6,7 @@ bool write_truecolor_tga( const string& filename, uint32_t* data, unsigned width
   if (!tgafile) return false;
 
   // The image header
-  byte header[ 18 ] = { 0 };
+  uint8_t header[ 18 ] = { 0 };
   header[  2 ] = 2;  // truecolor
   header[ 12 ] =  width        & 0xFF;
   header[ 13 ] = (width  >> 8) & 0xFF;

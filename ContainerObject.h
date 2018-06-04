@@ -58,7 +58,7 @@ public:
     void setChildrenMaterial(Material* material)
     {
         this->material = material;
-        for (int i = 0; i < children.size(); i++) {
+        for (int i = 0; i < (int)children.size(); i++) {
             children[i]->material = material;
         }
     }
@@ -68,7 +68,7 @@ public:
     {
         float newRadius = 0;
         float r;
-        for (int i = 0; i < children.size(); i++) {
+        for (int i = 0; i < (int)children.size(); i++) {
             if (children[i]->getRadius() < 0) {
                 printf("Warning, container has child with no bounding radius, auto bounding sphere may be incorrect.\n");
                 r = 1.0f;
@@ -124,7 +124,7 @@ public:
                 // cluster these objects into a group.
                 ContainerObject* group = new ContainerObject();
                 group->setLocation(target->getLocation());
-                for (int i = 0; i < neighbours.size(); i++) {
+                for (int i = 0; i < (int)neighbours.size(); i++) {
                     glm::vec3 offsetLocation = neighbours[i]->getLocation() - group->getLocation();
                     neighbours[i]->setLocation(offsetLocation);
                     group->add(neighbours[i]);                    
@@ -133,7 +133,7 @@ public:
                 add(group);
 
                 // if this group has too many objects recluster it with a reduced radius.
-                if (recurse && group->children.size() > MAX_OBJECTS) {
+                if (recurse && (int)group->children.size() > MAX_OBJECTS) {
                     group->cluster(true, CLUSTER_RADIUS / 2.0f);
                 }
 
@@ -143,7 +143,7 @@ public:
             }
         } while (childrenCopy.size() > 0);
 
-        bool didReduce =  children.size() < initialChildrenCount;
+        bool didReduce = (int)children.size() < initialChildrenCount;
 
         printf("Clustered object with %d children, reduced to %d\n", initialChildrenCount, (int)children.size());
 

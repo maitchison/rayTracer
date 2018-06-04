@@ -102,7 +102,8 @@ public:
                     (sample(uv+dx, TS_NEAREST)  * frac(x) * (1-frac(y))) +
                     (sample(uv+dx+dy, TS_NEAREST) * frac(x) * frac(y)) +
                     (sample(uv+dy, TS_NEAREST) * (1-frac(x)) * frac(y));                                
-        }                
+        }     
+		return glm::vec4(1, 0, 0, 1);
     }
         
     /** Samples texture given u and v between 0, 1. */
@@ -161,7 +162,7 @@ public:
         u = (u - 0.5f);
         v = (v - 0.5f);
 
-        float cx = (u-0.25)*2.0f;
+        float cx = (u-0.25f)*2.0f;
         float cy = v*2.0f;
         
         float x = 0;

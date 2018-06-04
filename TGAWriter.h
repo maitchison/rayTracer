@@ -11,13 +11,6 @@
 
 using namespace std;
 
-typedef unsigned char byte;
-typedef struct
-  {
-  byte red, green, blue, alpha;
-  }
-  RGBA_t;
-
 // It is presumed that the image is stored in memory as 
 //   RGBA_t data[ height ][ width ]
 // where lines are top to bottom and columns are left to right
