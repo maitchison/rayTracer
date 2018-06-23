@@ -127,6 +127,40 @@ void specialKeyboard(int key, int x, int y)
     redraw();
 }
 
+void benchmark()
+{
+	activateScene(5);
+
+	clock_t t;
+
+	gfx.clear(Color(0, 0, 0, 0), true);
+	camera->reset();
+
+	camera->superSample = HQ_RAYS;
+	camera->GI_SAMPLES = 64;
+	camera->lqMode = false;
+
+	t = clock();
+
+	printf("Starting benchmark:\n");
+
+	int pixelsRendered = camera->render(currentScene, 640 * 40, false);
+
+	float timeTaken = float(clock() - t) / CLOCKS_PER_SEC;
+	float pixelsPerSecond = pixelsRendered / timeTaken;
+	printf("Initial Benchmark results: pixels per second = %.2fk.\n", (pixelsPerSecond / 1000));
+
+	pixelsRendered += camera->render(currentScene, -1, false);
+
+	timeTaken = float(clock() - t) / CLOCKS_PER_SEC;
+	pixelsPerSecond = pixelsRendered / timeTaken;
+
+	printf("Final benchmark results: Rendered %d pixels in %f seconds at %.2fk pixels per second.\n", pixelsRendered, timeTaken, (pixelsPerSecond / 1000));
+
+
+}
+
+
 void keyboard(unsigned char key, int x, int y)
 {    
     switch (key) {
@@ -148,6 +182,7 @@ void keyboard(unsigned char key, int x, int y)
         case 'q': camera->rotate(+0.1f,0); break;
         case 'e': camera->rotate(-0.1f,0); break;
         case 'p': gfx.screenshot("Screenshot.tga");
+		case 'b': benchmark(); break;
         case ' ': 
             // force render, but also print locaiton.
             printf("Camera at:");

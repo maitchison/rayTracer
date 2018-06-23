@@ -131,8 +131,7 @@ public:
 			ray->length = ray->collision.t;
 
 			if (simpleTransform) {
-				ray->collision.location += location;
-				ray->pos += location;
+				ray->collision.location += location;				
 			}
 			else {
 				// transform world coords                    
