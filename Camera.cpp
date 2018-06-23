@@ -326,7 +326,7 @@ int Camera::render(Scene* scene, int pixels, bool autoReset)
     }    
 
 	#pragma loop(hint_parallel(8))  
-	//#pragma loop(ivdep) // ivdep will force this through. 
+	#pragma loop(ivdep) // ivdep will force this through. 
 	// would be better to render to independant blocks or lines, then write them through after the render... would also be interesting to see what the data dependancy is?  
 	// GFX buffer would be one, ray stats another...
     for (int i = 0; i < pixels; i++) {
