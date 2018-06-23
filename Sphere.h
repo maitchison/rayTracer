@@ -37,6 +37,6 @@ public:
         this->radius = radius;
 	};
 
-	RayIntersectionResult intersectObject(Ray ray) override;
+	bool intersectObject(Ray* ray) override;
     glm::vec2 getUV(glm::vec3 pos) override;    
 };

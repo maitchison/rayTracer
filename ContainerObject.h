@@ -27,10 +27,10 @@ public:
         this->boundingSphereRadius = reference->getRadius();
     }
 
-    RayIntersectionResult intersectObject(Ray ray) {
-        RayIntersectionResult result = this->reference->intersect(ray);
-        if (result.didCollide()) result.target = this;
-        return result;
+    bool intersectObject(Ray* ray) {
+        bool didCollide = this->reference->intersect(ray);
+        if (didCollide) ray->collision.target = this;
+        return didCollide;
     }
 };
 
@@ -52,7 +52,7 @@ public:
     virtual void add(SceneObject* object);
 
     /** Intersects ray with object. */
-	RayIntersectionResult intersectObject(Ray ray) override; 
+	bool intersectObject(Ray* ray) override; 
 
     /** Sets material for all child objects. */
     void setChildrenMaterial(Material* material)

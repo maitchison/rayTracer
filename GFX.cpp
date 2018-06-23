@@ -39,7 +39,6 @@ void GFX::updateBuffer()
     }
 }
 
-
 /** Adds a simple to the buffer, samples are averaged by weight. */
 void GFX::addSample(int x, int y, Color col, float weight)
 {
@@ -104,14 +103,8 @@ void GFX::blit()
 
 void GFX::init(void)
 {
-	// init texture	
-	for (int y = 0; y < SCREEN_HEIGHT; y++) {
-		for (int x = 0; x < SCREEN_WIDTH; x++) {
-			int cell = ((x / 8) + (y / 8)) % 2;
-			float v = 0.5f + cell * 0.5f;
-			buffer[y*SCREEN_WIDTH + x] = colorToInt24(Color(v, v, v, 1.0));
-		}
-	}
+	// init texture		
+	clear();
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

@@ -11,15 +11,15 @@
 /**
 * Sphere's intersection method.  The input is a ray (pos, dir). 
 */
-RayIntersectionResult Sphere::intersectObject(Ray ray)
+bool Sphere::intersectObject(Ray* ray)
 {    
-    glm::vec3 vdif = ray.pos;
-    float b = glm::dot(ray.dir, vdif);
+    glm::vec3 vdif = ray->pos;
+    float b = glm::dot(ray->dir, vdif);
     float len2 = glm::dot(vdif, vdif);
     float c = len2 - radius*radius;
     float delta = b*b - c;
    
-	if (delta < EPSILON) return RayIntersectionResult();
+	if (delta < EPSILON) return false;
 
     float t1 = -b - sqrt(delta);
     float t2 = -b + sqrt(delta);
@@ -30,21 +30,20 @@ RayIntersectionResult Sphere::intersectObject(Ray ray)
     if ((t2 >= 0) && ((t2 <= t1) || (t1 < 0))) t = t2;    
 
     // ray does not intersect
-    if (t < 0) {        
-        return RayIntersectionResult();
+    if (t < 0 || t > ray->length) {        
+		return false;
     } 
-
-    RayIntersectionResult result = RayIntersectionResult();
-    result.target = this;
-    result.t = t;
-    result.local = result.location = ray.pos + ray.dir * t;
-    result.normal = glm::normalize(result.local);    
+	    
+    ray->collision.target = this;
+	ray->collision.t = t;
+	ray->collision.local = ray->collision.location = ray->pos + ray->dir * t;
+	ray->collision.normal = glm::normalize(ray->collision.local);
 
     // might be a faster way of doing this?
-    float phi = atan2(result.local.z,result.local.x);    
-    result.tangent = glm::vec3(-sin(phi), 0, cos(phi));    
+    float phi = atan2(ray->collision.local.z, ray->collision.local.x);
+	ray->collision.tangent = glm::vec3(-sin(phi), 0, cos(phi));
     
-    return result;
+    return true;
 }
 
 /**

@@ -16,60 +16,6 @@
 #include "Utils.h"
 #include <glm/glm.hpp>
 
-// forwards
-class SceneObject;
-
-/** Structure containing information about a ray / object intersection.
- * It is often more efficent to calculate these values at once than to
- * do them individually.  Especially is the object is a composite object. */
-struct RayIntersectionResult
-{
-public:
-    // the location of the ray intersection in parent coordinates (if collision occured).
-    glm::vec3 location;    
-
-    // the location of the ray intersection in local coordinates (if collision occured).
-    glm::vec3 local;
-
-    // surface normal at the point of collision.
-    glm::vec3 normal;
-
-    // surface tangent at the point of collision.
-    glm::vec3 tangent;
-    
-    // uv co-ords of target at intersection point.
-    glm::vec2 uv;
-    
-    // pointer to object we collided with.
-    SceneObject* target = NULL;
-
-    // distance (in units) from ray origin to collision point.  Negative for no collision.
-    float t = -1;
-
-    /** Returns if ray collided with object or not. */
-    bool didCollide() {
-        return (t >= 0) && (target != NULL);
-    }
-
-    /** Creates a ray intersection result where the ray does not collide with the object. */
-    RayIntersectionResult() {};
-
-    /** Creates a ray intersection result with given parameters. */
-    RayIntersectionResult(SceneObject* target, float t, glm::vec3 local, glm::vec3 normal = glm::vec3(), glm::vec3 tangent = glm::vec3()) {
-        this->target = target;
-        this->t = t;
-        this->local = local;
-        this->location = local;
-        this->normal = normal;                
-        this->tangent = tangent;
-    }
-
-    static RayIntersectionResult NoCollision() {
-        return RayIntersectionResult();
-    };
-};
-
-
 class SceneObject
 {
 
@@ -154,7 +100,7 @@ public:
     }
         
     /** Transforms ray into local space then intersects with object. */
-    RayIntersectionResult intersect(Ray ray) {
+    bool intersect(Ray* ray) {
         
         // the idea here is to transform the ray into local space,
         // perform the intersection, then transform the resulting 
@@ -163,42 +109,53 @@ public:
         // Each class must implement the 'intersectObject' method, but can perform all calculations in local
         // space which simplifies things a lot and allows for nested transforms (as we transform the ray not
         // the object)
-        
-        static int RAYS_SIMPLE = 0;
-        static int RAYS_COMPLEX = 0;
 
+		glm::vec3 oldDir = ray->dir;
+		glm::vec3 oldPos = ray->pos;
+        
         if (simpleTransform) {            
-            ray.pos -= location;
+            ray->pos -= location;
         } else {
-            ray.transform(localTransformInv);
+            ray->transform(localTransformInv);
         }
 
-        RayIntersectionResult result = intersectObject(ray);
+        bool didIntersect = intersectObject(ray);
 
-        if (result.target && (result.uv.x == 0) && result.target->material->needsUV()) {
+        if (didIntersect && (ray->collision.uv.x == 0) && ray->collision.target->material->needsUV()) {
             // fetch uv only if required.
-            result.uv = result.target->getUV(result.local);
+			ray->collision.uv = ray->collision.target->getUV(ray->collision.local);
         }
 
+		if (didIntersect) {
+			// if we intersected the object, make sure to ignore any objects more distant from this point.
+			ray->length = ray->collision.t;
 
-        if (simpleTransform) {
-            result.location += location;
-        } else {
-            // transform world coords                    
-            result.location = toParent(glm::vec4(result.location,1));
-            
-            //note: this is not the proper transform.  It should be something to do with the inverse transpose,
-            //if the objects scale is set to non uniform this this will be wrong.
-            result.normal = glm::normalize(toParent(glm::vec4(result.normal,0)));
-            result.tangent = glm::normalize(toParent(glm::vec4(result.tangent,0)));            
-        }
-        
-        return result;
+			if (simpleTransform) {
+				ray->collision.location += location;
+				ray->pos += location;
+			}
+			else {
+				// transform world coords                    
+				ray->collision.location = toParent(glm::vec4(ray->collision.location, 1));
+
+				//note: this is not the proper transform.  It should be something to do with the inverse transpose,
+				//if the objects scale is set to non uniform this this will be wrong.
+				ray->collision.normal = glm::normalize(toParent(glm::vec4(ray->collision.normal, 0)));
+				ray->collision.tangent = glm::normalize(toParent(glm::vec4(ray->collision.tangent, 0)));
+			}
+		}
+
+		// get ray back				
+		ray->dir = oldDir;
+		ray->pos = oldPos;
+
+		return didIntersect;
+  
     }
 
     /** This should be overridden for each class. */
-    virtual RayIntersectionResult intersectObject(Ray ray) {
-        return RayIntersectionResult::NoCollision();
+    virtual bool intersectObject(Ray* ray) {
+		return false;
     }    
 
 	virtual ~SceneObject() {}    

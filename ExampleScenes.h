@@ -167,7 +167,7 @@ public:
         Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));                     
         plane->material = Material::Checkerboard(1.0f);
         
-        add(plane); 
+        add(plane); 		
         add(sphere1);     
         add(sphere2); 
         add(sphere3);     
@@ -523,10 +523,8 @@ public:
 
         name = "Test";
 
-        // lights
-        add(new Light(glm::vec3(-10,30,0), Color(1,0.2,0.2,1)));
-        // lights
-        add(new Light(glm::vec3(+10,30,0), Color(0.2,1,0.2,1)));
+        // light
+        add(new Light(glm::vec3(-10,30,0), Color(1,1,1,1)));
         
         //-- Create a pointer to a sphere object
         Sphere* sphere1 = new Sphere(glm::vec3(-5.0, -5.0, -50.0), 15.0);
@@ -539,16 +537,23 @@ public:
         sphere2->material = Material::Checkerboard();
         sphere3->material = Material::Reflective(Color(0,1,0,1));
         sphere3->material->reflectionBlur = 0.3f;
-        plane->material = Material::Checkerboard(1.0f);
+        plane->material = Material::Checkerboard(1.0f);		
         
         //--Add the above to the list of scene objects.
         add(plane); 
+		/*
         add(sphere1);     
         add(sphere2); 
         add(sphere3);     
+		*/
 
         // origin marker
-        add(new Sphere(glm::vec3(0,-20,0),3.0f));
+		SceneObject* marker = new Sphere(glm::vec3(0, -20, 0), 3.0f);
+		marker->material = Material::Emissive(Color(1, 0, 0, 1));
+        add(marker);
+
+		// simple lighting
+		camera->lightingModel = LM_DIRECT;
     }
 };
 
@@ -635,8 +640,8 @@ public:
         Plane* rightPlane = new Plane(glm::vec3(+40,0,0), glm::vec3(-1,0,0));
         Plane* backPlane = new Plane(glm::vec3(0,0,-80), glm::vec3(0,0,1));
         Plane* forePlane = new Plane(glm::vec3(0,0,20), glm::vec3(0,0,-1));
-        Plane* floorPlane = new Plane(glm::vec3(0,40,0), glm::vec3(0,-1,0));
-        Plane* ceilingPlane = new Plane(glm::vec3(0,-40,0), glm::vec3(0,1,0));
+        Plane* floorPlane = new Plane(glm::vec3(0,40,0), glm::vec3(0,1,0));
+        Plane* ceilingPlane = new Plane(glm::vec3(0,-40,0), glm::vec3(0,-1,0));
 
         // make the colors a little pastal.
         leftPlane->material = Material::Default(Color(0.9,0.1,0.1,1.0));

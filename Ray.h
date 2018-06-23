@@ -7,15 +7,69 @@
 #pragma once
 #include <glm/glm.hpp>
 
+class SceneObject;
+
+/** Structure containing information about a ray / object intersection.
+* It is often more efficent to calculate these values at once than to
+* do them individually.  Especially is the object is a composite object. */
+struct RayIntersectionResult
+{
+public:
+	// the location of the ray intersection in parent coordinates (if collision occured).
+	glm::vec3 location;
+
+	// the location of the ray intersection in local coordinates (if collision occured).
+	glm::vec3 local;
+
+	// surface normal at the point of collision.
+	glm::vec3 normal;
+
+	// surface tangent at the point of collision.
+	glm::vec3 tangent;
+
+	// uv co-ords of target at intersection point.
+	glm::vec2 uv;
+
+	// pointer to object we collided with.
+	SceneObject* target = NULL;
+
+	// distance (in units) from ray origin to collision point.  Negative for no collision.
+	float t = -1;
+
+	/** Returns if ray collided with object or not. */
+	bool didCollide() {
+		return (t >= 0) && (target != NULL);
+	}
+
+	/** Creates a ray intersection result where the ray does not collide with the object. */
+	RayIntersectionResult() {};
+
+	/** Creates a ray intersection result with given parameters. */
+	RayIntersectionResult(SceneObject* target, float t, glm::vec3 local, glm::vec3 normal = glm::vec3(), glm::vec3 tangent = glm::vec3()) {
+		this->target = target;
+		this->t = t;
+		this->local = local;
+		this->location = local;
+		this->normal = normal;
+		this->tangent = tangent;
+	}
+
+	static RayIntersectionResult NoCollision() {
+		return RayIntersectionResult();
+	};
+};
+
 class Ray 
 {
 public:
     glm::vec3 pos;	//The source point of the ray
 	glm::vec3 dir;	//The unit direction of the ray
 
-	// how far the ray can travel before it should be ignored.
-	float length = FP_INFINITE;
+	// information about this rays collision with scene.
+	RayIntersectionResult collision = RayIntersectionResult::NoCollision();
 
+	// how far the ray can travel before it should be ignored.
+	float length = 99999999.0f;
 
     // If true ray is tracing a shadow.
     bool shadowTrace = false;

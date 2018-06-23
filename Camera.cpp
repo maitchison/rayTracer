@@ -8,7 +8,6 @@ Camera::Camera(glm::vec3 location) : SceneObject(location)
 {
 }
 
-
 void Camera::calculateLighting(RayIntersectionResult intersection, ContainerObject* scene, Light* light, Color& ambientLightSum, Color& diffuseLightSum, Color& specularLightSum)
 {
     Material* material = intersection.target->material;
@@ -37,39 +36,42 @@ void Camera::calculateLighting(RayIntersectionResult intersection, ContainerObje
     // this is an optimization.  Points on the far side of a sphere, for example, will have no lighting
     // so there is no need to do shadow calculations.  
     bool needsShadow = light->shadow && (diffusePower > EPSILON || specularPower > EPSILON);
-            
+	
     // shadow
     // note: i'm 90% sure I should be doing the transpariency checks in the other order, i.e. absorb from objects closest 
     // to the light first.  Hovever this will often not be noticiable (I think... ?)
     if (needsShadow) 
     {
-        float lightDistance;
+		float lightDistance;
         glm::vec3 shadowTestPoint = intersection.location;
 
         // handle transparient shadows by letting ray continue when meeting a transparient object
         for (int i = 0; i < 9; i++) {            
             // offsetting the shadow trace a little stops self shadowing artifacts
-            Ray shadow(shadowTestPoint + lightVector * OFFSET_BIAS, lightVector);
-            shadow.shadowTrace=true; // this will ignore objects that do not cast shadows.
+			
+			lightDistance = glm::length(lightPos - shadowTestPoint);
 
-            RayIntersectionResult shadowIntersection = scene->intersect(shadow);    
-            lightDistance = glm::length(lightPos - shadowTestPoint);
+			Ray shadowRay; 
+			shadowRay = Ray(shadowTestPoint + lightVector * OFFSET_BIAS, lightVector);
+			shadowRay.length = lightDistance;
+            shadowRay.shadowTrace=true; // this will ignore objects that do not cast shadows.
 
-            if (shadowIntersection.didCollide() && shadowIntersection.t < lightDistance) {
+            scene->intersect(&shadowRay);    
+            
+            if (shadowRay.collision.didCollide()) {
+
                 // we sample the uv, so that textured transpariency will work :)        
-                Color occluderColor = shadowIntersection.target->material->getDiffuseColor(intersection.uv);
+                Color occluderColor = shadowRay.collision.target->material->getDiffuseColor(intersection.uv);
                 float transmission = 1.0f - occluderColor.a;
                 diffuseLight *= (transmission * occluderColor);
                 specularLight *= (transmission * occluderColor);
                 // no need to continue if we hit a solid object.
                 if (transmission < EPSILON) break;
-                shadowTestPoint = shadowIntersection.location;                
+                shadowTestPoint = shadowRay.collision.location;
             } else {
                 // didn't hit anything so stop.
                 break;
-            }
-
-
+            }			
         }
     }
 
@@ -86,40 +88,40 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
         return Color(0,0,0,1);
     }
 
-    RayIntersectionResult intersection = scene->intersect(ray);
+    bool didCollide = scene->intersect(&ray);
     
-    lastTraceIntersection = intersection;
+    lastTraceIntersection = ray.collision;
 
     // sepcial lighting models.
     switch (lightingModel) {
         case LM_UV: 
             // uv co-ords are not always generated, so generate them here.
-            if (intersection.didCollide()) {
-                intersection.uv = intersection.target->getUV(intersection.local);
+            if (ray.collision.didCollide()) {
+				ray.collision.uv = ray.collision.target->getUV(ray.collision.local);
             }
-            return Color(intersection.uv.x, intersection.uv.y, 0.4f, 1);        
+            return Color(ray.collision.uv.x, ray.collision.uv.y, 0.4f, 1);
         case LM_DEPTH: 
-            return Color(intersection.t/100,intersection.t/100,intersection.t/100,1);
+            return Color(ray.collision.t/100, ray.collision.t/100, ray.collision.t/100,1);
         case LM_WORLD: 
-            return Color(intersection.location/30.0f,1.0);
+            return Color(ray.collision.location/30.0f,1.0);
         case LM_LOCAL: 
-            return Color(intersection.local/5.0f,1.0);
+            return Color(ray.collision.local/5.0f,1.0);
     }    
 
-    if (!intersection.didCollide()) return backgroundColor;      //If there is no intersection return background colour
+    if (!didCollide) return backgroundColor;      //If there is no intersection return background colour
 
-    Material* material = intersection.target->material;
+    Material* material = ray.collision.target->material;
     
     // modify normal vector based on normal map (if required)
     if (material->normalTexture) {
         // we find the 3 vectors required to transform the normal map from object space to world space.
-        glm::vec3 materialNormal = glm::vec3(material->normalTexture->sampleNormalMap(intersection.uv) * 2.0f - 1.0f);
+        glm::vec3 materialNormal = glm::vec3(material->normalTexture->sampleNormalMap(ray.collision.uv) * 2.0f - 1.0f);
 
         // soften the normal map a little
         materialNormal = glm::normalize(materialNormal + 1.0f * glm::vec3(0,0,1));
 
-        glm::vec3 normal = intersection.normal;
-        glm::vec3 tangent = intersection.tangent;
+        glm::vec3 normal = ray.collision.normal;
+        glm::vec3 tangent = ray.collision.tangent;
         glm::vec3 bitangent = glm::cross(normal, tangent);
 
         glm::vec3 normalVector = glm::vec3(
@@ -127,11 +129,11 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
         );
 
         // update the intersection normal vector
-        intersection.normal = normalVector;
+		ray.collision.normal = normalVector;
     }
 
     if (lightingModel == LM_NORMAL) {
-        return Color(intersection.normal,1.0f);
+        return Color(ray.collision.normal,1.0f);
     }
 
     // sum up the lighting from all lights.
@@ -141,7 +143,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
     // we only need to look a the lights in direct lighting mode (ignore them in GI mode.)
     if (lightingModel == LM_DIRECT) {
         for (int i = 0; i < (int)scene->lights.size(); i++) {        
-            calculateLighting(intersection, scene, scene->lights[i], ambientLight, diffuseLight, specularLight);        
+		    calculateLighting(ray.collision, scene, scene->lights[i], ambientLight, diffuseLight, specularLight);
         }
     }
 
@@ -157,8 +159,9 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
                         
             // this is a fast (but biased) way to sample from the hemisphere, just pick a random location, normalise it, then
             // if it's on the wrong side reverse it.             
-            glm::vec3 rayDir = glm::normalize(glm::vec3(randf()-0.5f,randf()-0.5f,randf()-0.5f)); 
-            float diffusePower = glm::dot(rayDir, intersection.normal);
+			glm::vec3 rayDir;
+			rayDir = glm::normalize(glm::vec3(randf() - 0.5f, randf() - 0.5f, randf() - 0.5f));
+            float diffusePower = glm::dot(rayDir, ray.collision.normal);
             if (diffusePower < 0) {
                 rayDir = -rayDir;                    
                 diffusePower = -diffusePower;
@@ -177,12 +180,14 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             if (randf() > sqrtDiffusePower) continue;                
             diffusePower = sqrtDiffusePower;
             
-            Ray giRay = Ray(intersection.location + rayDir * OFFSET_BIAS, rayDir);            
+			Ray giRay;
+			giRay = Ray(ray.collision.location + rayDir * OFFSET_BIAS, rayDir);
             giRay.giRay = true; //enable some optimizatoins.
             
             // We then test the color of this ray.  
             // We set giSamples to 1 if gi was enabled, and 0 otherwise, this gives a 2 bounce lighting model.            
-            Color sampleRadiance = trace(giRay, scene, depth+1, giSamples > 1 ? 1 : 0);             
+			Color sampleRadiance;
+			sampleRadiance = trace(giRay, scene, depth + 1, giSamples > 1 ? 1 : 0);
 
             if (sampleRadiance.r != sampleRadiance.r) {
                 printf("Hmm, radiance is nan?\n");
@@ -202,20 +207,21 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
     }
 
     // combine lighting
-    Color materialColor = material->getDiffuseColor(intersection.uv);
+    Color materialColor = material->getDiffuseColor(ray.collision.uv);
     Color color = (ambientLight + diffuseLight) * materialColor + specularLight + material->emisiveColor;    
         
     // reflection    
     if(material->reflectivity > 0 && depth < MAX_RECUSION_DEPTH) {
         
-        glm::vec3 reflectedDir = glm::reflect(ray.dir, intersection.normal);
+        glm::vec3 reflectedDir = glm::reflect(ray.dir, ray.collision.normal);
         
         // add bluring
         if (material->reflectionBlur > EPSILON) {            
             reflectedDir = defocus(reflectedDir, material->reflectionBlur);
         }
 
-        Ray reflectedRay(intersection.location + reflectedDir * OFFSET_BIAS, reflectedDir);
+		Ray reflectedRay;
+		reflectedRay = Ray(ray.collision.location + reflectedDir * OFFSET_BIAS, reflectedDir);
         Color reflectedCol = trace(reflectedRay, scene, depth+1, giSamples); 
         color += (material->reflectivity*reflectedCol);        
     }
@@ -227,7 +233,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             // transparency 
     
             // start the ray a little further on from where we hit.
-            Ray transmittedRay = Ray(intersection.location + OFFSET_BIAS * ray.dir, ray.dir);
+            Ray transmittedRay = Ray(ray.collision.location + OFFSET_BIAS * ray.dir, ray.dir);
             Color transmittedCol = trace(transmittedRay, scene, depth, giSamples); 
             color += (1.0f-materialColor.a)*transmittedCol;
             
@@ -236,13 +242,14 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             // ----------------
             // refraction
     
-            glm::vec3 refractedDir = glm::refract(ray.dir, intersection.normal, 1.0f/material->refractionIndex);
+            glm::vec3 refractedDir = glm::refract(ray.dir, ray.collision.normal, 1.0f/material->refractionIndex);
 
-            Ray refractedRay = Ray(intersection.location + refractedDir * 0.001f , refractedDir);
+            Ray refractedRay = Ray(ray.collision.location + refractedDir * 0.001f , refractedDir);
             
             // the refracted ray will exit the object at this location, don't trace against entire scene, just trace against the 
             // specific object (faster, and less prone to error).
-            RayIntersectionResult exitPoint = intersection.target->intersect(refractedRay);
+            ray.collision.target->intersect(&refractedRay);
+			RayIntersectionResult exitPoint = refractedRay.collision;
 
             if (exitPoint.didCollide()) {
                 glm::vec3 exitDir = glm::refract(refractedDir, -exitPoint.normal, material->refractionIndex);
@@ -325,7 +332,7 @@ int Camera::render(Scene* scene, int pixels, bool autoReset)
         pixels = totalPixels - pixelOn - 1;
     }    
 
-	#pragma loop(hint_parallel(8))  
+	//#pragma loop(hint_parallel(8))  
 	//#pragma loop(ivdep) // ivdep will force this through. 
 	// would be better to render to independant blocks or lines, then write them through after the render... would also be interesting to see what the data dependancy is?  
 	// GFX buffer would be one, ray stats another...
