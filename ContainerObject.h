@@ -24,7 +24,7 @@ public:
     ReferenceObject(glm::vec3 location, SceneObject* reference) : SceneObject(location)
     {
         this->reference = reference;                
-        this->boundingSphereRadius = reference->getRadius();
+        this->boundingVolume = reference->boundingVolume;
     }
 
     bool intersectObject(Ray* ray) {
@@ -69,15 +69,15 @@ public:
         float newRadius = 0;
         float r;
         for (int i = 0; i < (int)children.size(); i++) {
-            if (children[i]->getRadius() < 0) {
+            if (children[i]->boundingVolume.type = BV_NONE) {
                 printf("Warning, container has child with no bounding radius, auto bounding sphere may be incorrect.\n");
                 r = 1.0f;
             } else {
-                r = glm::length(children[i]->getLocation() + children[i]->getRadius());
+                r = glm::length(children[i]->getLocation() + children[i]->boundingVolume.getRadius());
             }            
             newRadius = maxf(r, newRadius);            
         }
-        setRadius(newRadius);
+        boundingVolume = BoundingVolume::Sphere(newRadius);
     }
 
     /** Clusters objects within container into proximal groups and assigns them to new sub-objects.  This can speed
@@ -114,7 +114,7 @@ public:
             for (int i = childrenCopy.size()-1; i >= 0; i--) {
                 
                 float distance = glm::length(target->getLocation() - childrenCopy[i]->getLocation());
-                if (childrenCopy[i]==target || distance < (target->getRadius() * CLUSTER_RADIUS)) {
+                if (childrenCopy[i]==target || distance < (target->boundingVolume.getRadius() * CLUSTER_RADIUS)) {
                     neighbours.push_back(childrenCopy[i]);
                     childrenCopy.erase(childrenCopy.begin()+i);
                 }                

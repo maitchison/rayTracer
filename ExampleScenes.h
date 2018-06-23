@@ -417,18 +417,15 @@ public:
         // back mirror
         Cube* backPlane = new Cube(glm::vec3(0,0,-15), glm::vec3(21,15,2));
         backPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
-        //backPlane->material->reflectionBlur = 0.02f;
-        backPlane->setRadius(99);
+        //backPlane->material->reflectionBlur = 0.02f;    
         add(backPlane);
         Cube* leftPlane = new Cube(glm::vec3(-10,0,0), glm::vec3(2,15,30));
         leftPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
         //leftPlane->material->reflectionBlur = 0.02f;
-        leftPlane->setRadius(99);
         add(leftPlane);
         Cube* rightPlane = new Cube(glm::vec3(+10,0,0), glm::vec3(2,15,30));
         rightPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
-        //rightPlane->material->reflectionBlur = 0.02f;
-        rightPlane->setRadius(99);
+        //rightPlane->material->reflectionBlur = 0.02f; 
         add(rightPlane);
 
         

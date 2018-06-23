@@ -13,38 +13,24 @@ void ContainerObject::add(SceneObject* object)
 bool ContainerObject::intersectObject(Ray* ray)
 {
 
-    if (boundingSphereRadius > 0) {
+	// big hack, use bounds if we are far away.  Should be fine for GI rays.	
+	if (ray->giRay && boundingVolume.type != BV_NONE) {
+		float distanceToObject2 = glm::length2(ray->pos);
+		float bvRadius2 = boundingVolume.getRadius(); 
+		bvRadius2 = bvRadius2 * bvRadius2;
 
-		bool distanceFromSphere2 = glm::length2(ray->pos);
-		float sphereRadius2 = boundingSphereRadius * boundingSphereRadius;
-		float maxRadius2 = (boundingSphereRadius + ray->length) * (boundingSphereRadius + ray->length);
-
-		// no way to hit the sphere, we are too far away.
-		if (distanceFromSphere2 > maxRadius2) return false;
-
-		if (distanceFromSphere2 > boundingSphereRadius*boundingSphereRadius) {
-			// we may or may not hit the sphere so check futher
-
-			float t = raySphereIntersection(ray->pos, ray->dir, glm::vec3(0, 0, 0), boundingSphereRadius);
-
-			if (t > ray->length) return false;
-
-			// big hack, use bounds if we are far away.  Should be fine for GI rays.
-			if (ray->giRay && t > boundingSphereRadius*10.0f && t < ray->length) {
+		if (distanceToObject2 > bvRadius2*100.0f) {
+			float t = boundingVolume.rayIntersectionDistance(ray);
+			if (t > 0 && t < ray->length) {
 				glm::vec3 local = (ray->pos + ray->dir * t);
 				glm::vec3 normal = glm::normalize(local);
 				ray->collision = RayIntersectionResult(this, t, local, normal, normal);
 				return true;
 			}
-			// we did not hit sphere bounds so exit.
-			if (t <= 0) {
-				return false;
-			}
+		}				
+	} 
+	
 
-		}
-
-    }
-        
     // we check each child object and take the closest collision.
 	bool didCollide = false;
     for (int i = 0; i < children.size(); i++) {

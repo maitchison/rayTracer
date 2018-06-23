@@ -120,10 +120,12 @@ protected:
             add(left);
             add(right);
 
-            boundingSphereRadius = maxf(
-                glm::length(leftCenter) + left->boundingSphereRadius, 
-                glm::length(rightCenter) + right->boundingSphereRadius
+            float boundingSphereRadius = maxf(
+                glm::length(leftCenter) + left->boundingVolume.getRadius(), 
+                glm::length(rightCenter) + right->boundingVolume.getRadius()
             );
+
+			boundingVolume = BoundingVolume::Sphere(boundingSphereRadius);
                 
             return;
 
@@ -132,7 +134,7 @@ protected:
         // the base case, just add the triangles to the object and calculate a bounding radius.        
 
         int faces = vertices->size() / 3;
-        boundingSphereRadius = -1;
+        float boundingSphereRadius = -1;
         
         for (int f = 0; f < faces; f++) {
             // this will show vertices
@@ -163,6 +165,8 @@ protected:
             sphere->material->diffuseColor.a = 0.25;
             add(sphere);
         }
+
+		boundingVolume = BoundingVolume::Sphere(boundingSphereRadius);
 
         //printf("Size of mesh: %f\n", boundingSphereRadius);
 

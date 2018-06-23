@@ -5,6 +5,19 @@
 *=========================================================================
 */
 
+/*
+Performance:
+
+(single thread) 
+
+v0.1 53k (GI optimization)
+v0.2 79k (Pass rays by reference, rays have limited length
+
+63k     Switched to new bounding volume system (might not be as fast...)
+103k	Fixed 't' calculation when doing sphere bounds test, much faster now
+
+*/
+
 // make sure GFX loads first
 #include "GFX.h"
 

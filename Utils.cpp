@@ -104,6 +104,28 @@ glm::mat4x4 EulerRotationMatrix(glm::vec3 rotation)
     return rotationMatrix;
 }   
 
+//faster version
+float raySphereIntersection(const glm::vec3* rayPos, const glm::vec3* rayDir, float radius)
+{
+	float b = glm::dot(*rayDir, *rayPos);
+	float len2 = glm::dot(*rayPos, *rayPos);
+	float c = len2 - radius * radius;
+	float delta = b * b - c;
+
+	if (delta < EPSILON) return 0;
+
+	float sqrt_delta = sqrt(delta);
+	float t1 = -b - sqrt_delta;
+	float t2 = -b + sqrt_delta;
+
+	float t = -1;
+
+	if ((t1 >= 0) && ((t1 <= t2) || (t2 < 0))) t = t1;
+	if ((t2 >= 0) && ((t2 <= t1) || (t1 < 0))) t = t2;
+
+	return t < 0 ? 0 : t;
+}
+
 float raySphereIntersection(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 sphereLocation, float radius)
 {    
     glm::vec3 vdif = rayPos - sphereLocation;
@@ -114,7 +136,7 @@ float raySphereIntersection(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 sphere
    
 	if (delta < EPSILON) return 0;
 
-    float sqrt_delta = sqrt(delta); // optermizor would have done this for me right?
+    float sqrt_delta = sqrt(delta); 
     float t1 = -b - sqrt_delta;
     float t2 = -b + sqrt_delta;
     

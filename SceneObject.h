@@ -16,8 +16,81 @@
 #include "Utils.h"
 #include <glm/glm.hpp>
 
+
+enum Volume { BV_NONE, BV_SPHERE, BV_AABB };
+
+/** Handles fast bounds check to accelerate intersections. */
+// Note: would have been nice do this this with virtual methods but it's faster if we
+// can do the binding at compile time (inlining etc).
+class BoundingVolume
+{
+
+public:
+
+	Volume type = BV_NONE;
+
+	float sphereRadius = 1.0f;
+	glm::vec3 boxSize = glm::vec3(1, 1, 1);
+
+	static BoundingVolume Sphere(float radius) {
+		BoundingVolume bv = BoundingVolume();
+		bv.type = BV_SPHERE;
+		bv.sphereRadius = radius;
+		return bv;
+	}
+
+	/** Returns if p is inside this volume. */
+	bool isInside(const glm::vec3 p) {
+		switch (type) {
+		case BV_NONE:
+			return true;
+		case BV_SPHERE:
+			return glm::length2(p) <= (sphereRadius * sphereRadius);		
+		}
+		return false;
+	}
+
+	/** radius of sphere that contains volume. */
+	inline float getRadius() {
+		switch (type) {
+		case BV_NONE:
+			return 0.0f;
+		case BV_SPHERE:
+			return sphereRadius;
+		}
+		return 0.0f;
+	}
+
+	/** returns if this ray intersects the volume or not. */
+	bool rayIntersects(const Ray* ray) {
+		switch (type) {
+		case BV_NONE:
+			return true;
+		case BV_SPHERE:
+			if (glm::length2(ray->pos) < sphereRadius*sphereRadius) return true; // make sure to intersect if we are inside.
+			float t = raySphereIntersection(&ray->pos, &ray->dir, sphereRadius);
+			return (t > 0 && t < ray->length);
+		}
+		return false;
+	}
+
+	/** returns distance ray must travel before hitting object, or -1 of ray does not hit object. */
+	float rayIntersectionDistance(const Ray* ray) {
+		switch (type) {
+		case BV_NONE:
+			return -1;
+		case BV_SPHERE:
+			return raySphereIntersection(&ray->pos, &ray->dir, sphereRadius);
+		}
+	}
+
+};
+
 class SceneObject
 {
+
+public:
+	BoundingVolume boundingVolume = BoundingVolume();
 
 protected:
     // our local transforms
@@ -27,10 +100,6 @@ protected:
 
     // indicates that scene object applies only a simple translation transformation.
     bool simpleTransform = true;
-
-    // radius of objects bounding sphere in local space (i.e. unscaled). 
-    // A negative value disables the sphere bounding optimization.    
-    float boundingSphereRadius = -1;
 
     void rebuildTransforms() {
         localTransform = glm::mat4x4(1);        
@@ -64,14 +133,6 @@ public:
         rebuildTransforms();
     }
 
-    inline float getRadius() {
-        return this->boundingSphereRadius;        
-    }
-
-    inline void setRadius(float radius) {
-        boundingSphereRadius = radius;
-    }
-
     inline void setScale(glm::vec3 scale) {
         if (scale.x == 0 || scale.y == 0 || scale.z == 0) {
             printf("WARNING: Invalid transform.  Scale = 0.");
@@ -84,7 +145,6 @@ public:
     glm::vec3 getLocation() { return location; };
     glm::vec3 getRotation() { return rotation; };
     glm::vec3 getScale() { return scale; };
-    float getBoundingSphereRadius() { return boundingSphereRadius; };
     glm::mat4x4 getLocalTransform() { return localTransform; }
     glm::mat4x4 getLocalTransformInv() { return localTransformInv; }
 
@@ -118,6 +178,13 @@ public:
         } else {
             ray->transform(localTransformInv);
         }
+
+		// first check out volume
+		if (!boundingVolume.rayIntersects(ray)) {
+			ray->dir = oldDir;
+			ray->pos = oldPos;
+			return false;
+		}
 
         bool didIntersect = intersectObject(ray);
 
@@ -171,11 +238,5 @@ public:
     glm::vec3 toParent(glm::vec4 p) {
         return glm::vec3(localTransform * p);
     }
-    
-    /** Tests if ray intersects this objects sphere bounding box.  Objects without bounding spheres will always pass this test. 
-     * Ray should be in local space.  */
-    bool sphereBoundsTest(Ray ray) {
-        return boundingSphereRadius < 0 ? true : raySphereIntersection(ray.pos, ray.dir, glm::vec3(0,0,0), boundingSphereRadius) > 0;
-    }
-
+            
 };

@@ -43,7 +43,7 @@ public:
         add(new Plane(v5,v8,v4,v1)); // right                                        
         
         // set the radius
-        boundingSphereRadius = glm::length(scale);
+        boundingVolume = BoundingVolume::Sphere(glm::length(scale));
     }
 
 };
