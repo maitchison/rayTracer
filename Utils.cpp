@@ -169,3 +169,21 @@ float maxf(float a, float b)
 {
     return a > b ? a : b;
 }
+
+// from https://tavianator.com/fast-branchless-raybounding-box-intersections-part-2-nans/
+float rayBoxIntersection(glm::vec3 box, glm::vec3 rayPos, glm::vec3 rayDir)
+{
+	double tmin = -INFINITY, tmax = INFINITY;
+
+	glm::vec3 ray_dir_inv = 1.0f / rayDir;
+
+	for (int i = 0; i < 3; ++i) {
+		double t1 = (-box[i] - rayPos[i])*ray_dir_inv[i];
+		double t2 = (+box[i] - rayPos[i])*ray_dir_inv[i];
+
+		tmin = std::max(tmin, std::min(t1, t2));
+		tmax = std::min(tmax, std::max(t1, t2));
+	}
+
+	return tmax > std::max(tmin, 0.0) ? tmax : 0;	
+}

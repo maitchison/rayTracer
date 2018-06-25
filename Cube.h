@@ -42,8 +42,9 @@ public:
         add(new Plane(v7,v6,v2,v3)); // left
         add(new Plane(v5,v8,v4,v1)); // right                                        
         
-        // set the radius
+        // set the radius... switch to AABB later on.
         boundingVolume = BoundingVolume::Sphere(glm::length(scale));
+		//boundingVolume = BoundingVolume::AABB(scale);
     }
 
 };

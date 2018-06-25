@@ -73,7 +73,7 @@ public:
                 printf("Warning, container has child with no bounding radius, auto bounding sphere may be incorrect.\n");
                 r = 1.0f;
             } else {
-                r = glm::length(children[i]->getLocation() + children[i]->boundingVolume.getRadius());
+                r = glm::length(children[i]->getLocation()) + children[i]->boundingVolume.getRadius();
             }            
             newRadius = maxf(r, newRadius);            
         }

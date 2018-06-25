@@ -398,6 +398,7 @@ public:
         const int NUM_OBJECTS_Y = 11;
         
         // duplicate dragons
+		ContainerObject* dragons = new ContainerObject();
         for (int i = 0; i < NUM_OBJECTS_X; i++) {
             for (int j = 0; j < NUM_OBJECTS_Y; j++) {
                 // rather than creating new dragons (which would repartition them and load the mesh into memory again)
@@ -410,39 +411,58 @@ public:
                 ReferenceObject* dragonCopy = new ReferenceObject(glm::vec3((i-(NUM_OBJECTS_X/2))*1.2,-0.5,(j-(NUM_OBJECTS_Y/2))*2), dragon);
                 dragonCopy->setRotation(glm::vec3(0, (randf()-0.5f)*PI*0.3f + (0.4f*PI), 0));
                 //dragonCopy->material = parameterisedMaterial(i+(j*3), 0);                
-                add(dragonCopy); 
+                dragons->add(dragonCopy); 
             }    
         }
+	
+		// a bit experimental, but try the auto clustering algorithm
+		// ~2x speed, but broken at the momement.
+		// dragons->cluster();
 
+		add(dragons);
+		
+		/*
         // back mirror
-        Cube* backPlane = new Cube(glm::vec3(0,0,-15), glm::vec3(21,15,2));
-        backPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
-        //backPlane->material->reflectionBlur = 0.02f;    
+        Cube* backPlane = new Cube(glm::vec3(0,0,-15), glm::vec3(21,15,2));		
         add(backPlane);
         Cube* leftPlane = new Cube(glm::vec3(-10,0,0), glm::vec3(2,15,30));
-        leftPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
-        //leftPlane->material->reflectionBlur = 0.02f;
         add(leftPlane);
         Cube* rightPlane = new Cube(glm::vec3(+10,0,0), glm::vec3(2,15,30));
-        rightPlane->material = Material::Reflective(Color(0.3f,0.3f,0.5f,1),0.8f);        
-        //rightPlane->material->reflectionBlur = 0.02f; 
-        add(rightPlane);
+        add(rightPlane);     
 
-        
+
+		Cube* topPlane = new Cube(glm::vec3(+10, 0, 0), glm::vec3(2, 15, 30));
+		add(rightPlane);
+
+		*/
+
+		//Cube* mirrorBox = new Cube(glm::vec3(0, 0, 0), glm::vec3(-60, -600, -60)); // negatives reverse the normal direction.
+		//mirrorBox->castsShadows = false;
+		//add(mirrorBox);
+
+		Cube* lightBox = new Cube(glm::vec3(0, 10, 0), glm::vec3(5, 1, 5));
+		lightBox->material = Material::Emissive(Color(1, 1, 1, 1)*2.0f);
+		lightBox->castsShadows = false;
+		add(lightBox);
+
+		Cube* lightCase = new Cube(glm::vec3(0, 10, 0), glm::vec3(5.2, 0.9, 5.2));
+		lightCase->material = Material::Default(Color(0.3, 0.3, 0.3, 1));
+		add(lightCase);
+
+		//Material* mirrorMaterial = Material::Reflective(Color(0.3f, 0.3f, 0.5f, 1), 0.2f);
+		//mirrorMaterial->reflectionBlur = 0.02f;
+		//mirrorBox->material = mirrorMaterial;
 
         // some light sources for GI
-        Cube* light1 = new Cube(glm::vec3(-2.5,0,0), glm::vec3(0.6,0.5,20));
+        Cube* light1 = new Cube(glm::vec3(-2.3,1,0), glm::vec3(0.6,0.5,20));
         light1->material = parameterisedMaterial(5, 2);        
         light1->setRotation(glm::vec3(0,0,PI/4));
         add(light1);
-        Cube* light2 = new Cube(glm::vec3(+2.5,0,0), glm::vec3(0.6,0.5,20));
+        Cube* light2 = new Cube(glm::vec3(+2.3,1,0), glm::vec3(0.6,0.5,20));
         light2->material = parameterisedMaterial(6, 2);        
         light2->setRotation(glm::vec3(0,0,PI/4));
         add(light2);
-
-        // a bit experimental, but try the auto clustering algorithm
-        this->cluster();
-
+        
         camera->lightingModel = LM_GI; // gi looks way better, but is slow :(
 
         //camera->setLocation(glm::vec3(0,7.6,16.3));

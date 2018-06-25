@@ -39,6 +39,13 @@ public:
 		return bv;
 	}
 
+	static BoundingVolume AABB(glm::vec3 size) {
+		BoundingVolume bv = BoundingVolume();
+		bv.type = BV_AABB;
+		bv.boxSize = size;
+		return bv;
+	}
+
 	/** Returns if p is inside this volume. */
 	bool isInside(const glm::vec3 p) {
 		switch (type) {
@@ -46,6 +53,8 @@ public:
 			return true;
 		case BV_SPHERE:
 			return glm::length2(p) <= (sphereRadius * sphereRadius);		
+		case BV_AABB:
+			return (abs(p.x) < boxSize.x) && (abs(p.y) < boxSize.y) && (abs(p.z) < boxSize.z);
 		}
 		return false;
 	}
@@ -57,18 +66,27 @@ public:
 			return 0.0f;
 		case BV_SPHERE:
 			return sphereRadius;
+		case BV_AABB:
+			return glm::length(boxSize);
 		}
 		return 0.0f;
 	}
 
 	/** returns if this ray intersects the volume or not. */
 	bool rayIntersects(const Ray* ray) {
+
+		float t;
+
 		switch (type) {
 		case BV_NONE:
-			return true;
+			return true;			
 		case BV_SPHERE:
 			if (glm::length2(ray->pos) < sphereRadius*sphereRadius) return true; // make sure to intersect if we are inside.
-			float t = raySphereIntersection(&ray->pos, &ray->dir, sphereRadius);
+			t = raySphereIntersection(&ray->pos, &ray->dir, sphereRadius);
+			return (t > 0 && t < ray->length);
+		case BV_AABB:
+			if (isInside(ray->pos)) return true;
+			t = rayBoxIntersection(boxSize, ray->pos, ray->dir);
 			return (t > 0 && t < ray->length);
 		}
 		return false;
@@ -81,6 +99,8 @@ public:
 			return -1;
 		case BV_SPHERE:
 			return raySphereIntersection(&ray->pos, &ray->dir, sphereRadius);
+		case BV_AABB:
+			return rayBoxIntersection(boxSize, ray->pos, ray->dir);
 		}
 	}
 
@@ -179,7 +199,7 @@ public:
             ray->transform(localTransformInv);
         }
 
-		// first check out volume
+		// first check our volume
 		if (!boundingVolume.rayIntersects(ray)) {
 			ray->dir = oldDir;
 			ray->pos = oldPos;

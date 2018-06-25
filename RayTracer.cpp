@@ -16,6 +16,11 @@ v0.2 79k (Pass rays by reference, rays have limited length
 63k     Switched to new bounding volume system (might not be as fast...)
 103k	Fixed 't' calculation when doing sphere bounds test, much faster now
 
+
+Planned features
+[ ] HDR output with bloom (and gamma)
+[ ] Voxelisation (with visualisation mode)
+
 */
 
 // make sure GFX loads first
@@ -91,7 +96,7 @@ int counter = 0;
 int frameOn = 0;
 
 int render_mode = RM_LQ;
-int initialScene = 5;
+int initialScene = 6;
 
 int passes = 0;
 
@@ -194,7 +199,7 @@ void keyboard(unsigned char key, int x, int y)
         case 'c': camera->move(0, 0, -1); break;
         case 'q': camera->rotate(+0.1f,0); break;
         case 'e': camera->rotate(-0.1f,0); break;
-        case 'p': gfx.screenshot("Screenshot.tga");
+		case 'p': gfx.screenshot("Screenshot.tga"); break;
 		case 'b': benchmark(); break;
         case ' ': 
             // force render, but also print locaiton.
@@ -265,6 +270,7 @@ void update(void)
 			if (pixelsRendered == 0) {
                 passes++;
                 printf(">>>> Pass %d\n", passes);
+				gfx.screenshot("_" + currentScene->name + "_" + std::to_string(passes) + ".tga");
                 if (mode == RM_RENDER_AND_EXIT) {
                     gfx.screenshot(currentScene->name+"_"+std::to_string(passes)+".tga");                    
                     if (passes >= requiredPasses) exit;

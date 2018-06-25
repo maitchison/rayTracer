@@ -75,6 +75,12 @@ protected:
             std::vector<glm::vec3>* leftHalf = new std::vector<glm::vec3>();
             std::vector<glm::vec3>* rightHalf = new std::vector<glm::vec3>();
 
+
+			//todo:
+			// center should be volume center, not CoM
+			// use AABB instead
+			// maybe use a method that auto generates the bounds.
+
             glm::vec3 leftCenter = glm::vec3(0,0,0);
             glm::vec3 rightCenter = glm::vec3(0,0,0);
 
@@ -105,7 +111,7 @@ protected:
             leftCenter /= leftHalf->size();
             rightCenter /= rightHalf->size();
             
-            // center the meshes (this is required for optimal sphere bounds)
+            // center the meshes (this is required for optimal volume bounds)
             for (int i = 0; i < leftHalf->size(); i++) {
                 (*leftHalf)[i] -= leftCenter;
             }
@@ -119,12 +125,20 @@ protected:
             
             add(left);
             add(right);
-
+			
             float boundingSphereRadius = maxf(
                 glm::length(leftCenter) + left->boundingVolume.getRadius(), 
                 glm::length(rightCenter) + right->boundingVolume.getRadius()
             );
+			
+			glm::vec3 boundingBoxSize;
+			for (int i = 0; i < 3; i++) {
+				boundingBoxSize[i] = max(
+					abs(leftCenter[i]) + left->boundingVolume.boxSize[i],
+					abs(rightCenter[i]) + right->boundingVolume.boxSize[i]);									
+			}
 
+			//boundingVolume = BoundingVolume::AABB(boundingBoxSize);		
 			boundingVolume = BoundingVolume::Sphere(boundingSphereRadius);
                 
             return;
@@ -134,7 +148,8 @@ protected:
         // the base case, just add the triangles to the object and calculate a bounding radius.        
 
         int faces = vertices->size() / 3;
-        float boundingSphereRadius = -1;
+		glm::vec3 boundingBoxSize = glm::vec3();
+		float boundingSphereRadius = 0.0f;
         
         for (int f = 0; f < faces; f++) {
             // this will show vertices
@@ -153,21 +168,19 @@ protected:
                 add(triangle);  
             }                                              
 
+			// update bounds
             for (int i = 0; i < 3; i++) {
-
-                float r = glm::length((*vertices)[f*3+i]);
-                if (r > boundingSphereRadius) boundingSphereRadius = r;
+				glm::vec3 v = (*vertices)[f * 3 + i];
+				boundingSphereRadius = max(boundingSphereRadius, glm::length(v));
+				for (int j = 0; j < 3; j++) {
+					boundingBoxSize[j] = max(boundingBoxSize[j], abs(v[j]));
+				}
             }                            
         }
 
-        if (showDivision) {
-            Sphere* sphere = new Sphere(glm::vec3(0,0,0), boundingSphereRadius);
-            sphere->material->diffuseColor.a = 0.25;
-            add(sphere);
-        }
-
+		//boundingVolume = BoundingVolume::AABB(boundingBoxSize);
 		boundingVolume = BoundingVolume::Sphere(boundingSphereRadius);
-
+		
         //printf("Size of mesh: %f\n", boundingSphereRadius);
 
     }    

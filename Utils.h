@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <algorithm>
 
 namespace glm {
 
@@ -66,3 +67,6 @@ float raySphereIntersection(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 sphere
 void print(glm::mat4x4 m);
 void print(glm::vec4 v);
 void print(glm::vec3 v);
+
+/** Tests if ray intersects bounding box or not.  Returns distance ray travels before hit, or 0 if it doesn't intersect. */
+float rayBoxIntersection(glm::vec3 box, glm::vec3 rayPos, glm::vec3 rayDir);

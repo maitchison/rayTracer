@@ -201,7 +201,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             // essentially we use using the diffuse lighting model only here.  for specular it's better to just
             // set some reflectivty (+ blur if you like)
             
-            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/GI_SAMPLES) * sqrtDiffusePower);
+            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/giSamples) * sqrtDiffusePower);
         }
         
     }
@@ -332,8 +332,8 @@ int Camera::render(Scene* scene, int pixels, bool autoReset)
         pixels = totalPixels - pixelOn - 1;
     }    
 
-	//#pragma loop(hint_parallel(8))  
-	//#pragma loop(ivdep) // ivdep will force this through. 
+	#pragma loop(hint_parallel(8))  
+	#pragma loop(ivdep) // ivdep will force this through. 
 	// would be better to render to independant blocks or lines, then write them through after the render... would also be interesting to see what the data dependancy is?  
 	// GFX buffer would be one, ray stats another...
     for (int i = 0; i < pixels; i++) {
