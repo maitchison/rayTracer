@@ -11,6 +11,17 @@ bool inBounds(int x, int y) {
 	return ((x >= 0) && (y >= 0) && (x < SCREEN_WIDTH) && (y < SCREEN_HEIGHT));
 }
 
+/** Maps from linear HDR space to 0-255 Gamma space. 
+	Color is divideded by alpha, i.e. alpha is the inverse weighting.
+*/
+uint32_t mapColor(Color col)
+{
+	col.r = powf(col.r/col.a, 1.0f / 2.2f);
+	col.g = powf(col.g/col.a, 1.0f / 2.2f);
+	col.b = powf(col.b/col.a, 1.0f / 2.2f);
+	return colorToInt24(col);
+}
+
 /** Place a pixel on the frame buffer.
  * If shallow is true then only the color buffer is updated, not the sample buffer.
  * This allows writing to the screen without destroying the sample buffer.
@@ -19,7 +30,7 @@ void GFX::putPixel(int x, int y, Color col, bool shallow)
 {
     if (!inBounds(x,y)) return;
     if (shallow) {
-        buffer[y*SCREEN_WIDTH + x] = colorToInt24(col);
+        buffer[y*SCREEN_WIDTH + x] = mapColor(col);
     } else {
 	    sampleBuffer[y*SCREEN_WIDTH+x] = Color(0,0,0,0);
         addSample(x,y,col);
@@ -33,7 +44,7 @@ void GFX::updateBuffer()
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
             {
-                buffer[y*SCREEN_WIDTH + x] = colorToInt24(sampleBuffer[y*SCREEN_WIDTH + x] / sampleBuffer[y*SCREEN_WIDTH + x].a);
+                buffer[y*SCREEN_WIDTH + x] = mapColor(sampleBuffer[y*SCREEN_WIDTH + x] / sampleBuffer[y*SCREEN_WIDTH + x].a);
             }
         }
     }
@@ -45,13 +56,13 @@ void GFX::addSample(int x, int y, Color col, float weight)
 	if (!inBounds(x,y) || weight == 0.0f) return;
 	col.a = 1.0f;
     sampleBuffer[y*SCREEN_WIDTH + x] += (col*weight);
-	buffer[y*SCREEN_WIDTH + x] = colorToInt24(sampleBuffer[y*SCREEN_WIDTH + x] / sampleBuffer[y*SCREEN_WIDTH + x].a);
+	buffer[y*SCREEN_WIDTH + x] = mapColor(sampleBuffer[y*SCREEN_WIDTH + x]);
 }
 
 void GFX::clear(Color col, bool shallow)
 {
     col.a = 0.0;
-	uint32_t c = colorToInt24(col);
+	uint32_t c = mapColor(col);
 	for (int y = 0; y < SCREEN_HEIGHT; y++) {
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
             if (!shallow)

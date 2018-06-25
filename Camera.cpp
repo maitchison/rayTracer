@@ -200,8 +200,10 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             //
             // essentially we use using the diffuse lighting model only here.  for specular it's better to just
             // set some reflectivty (+ blur if you like)
+
+			float factor = (giSamples == 1) ? 0.1f: 1.0f; // for some reason reducing the bounced light is too strong, maybe PDF is wrong?
             
-            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/giSamples) * sqrtDiffusePower);
+            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/giSamples) * sqrtDiffusePower) * factor;
         }
         
     }

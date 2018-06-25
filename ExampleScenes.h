@@ -384,6 +384,8 @@ public:
         //plane->material->diffuseTexture = new BitmapTexture("./textures/Wood_plank_007_COLOR.png");
         //plane->material->normalTexture = new BitmapTexture("./textures/Wood_plank_007_NORM.png", true);    
         //plane->material->diffuseTexture = new CheckerboardTexture(2.0f);
+		plane->material = Material::Reflective(Color(0.7, 0.8, 0.9, 1), 0.0);
+
         add(plane); 
 
         // mesh objects...
@@ -441,11 +443,11 @@ public:
 		//add(mirrorBox);
 
 		Cube* lightBox = new Cube(glm::vec3(0, 10, 0), glm::vec3(5, 1, 5));
-		lightBox->material = Material::Emissive(Color(1, 1, 1, 1)*2.0f);
+		lightBox->material = Material::Emissive(Color(1, 1, 1, 1)*0.5f);
 		lightBox->castsShadows = false;
 		add(lightBox);
 
-		Cube* lightCase = new Cube(glm::vec3(0, 10, 0), glm::vec3(5.2, 0.9, 5.2));
+		Cube* lightCase = new Cube(glm::vec3(0, 10, 0), glm::vec3(5.5, 0.8, 5.5));
 		lightCase->material = Material::Default(Color(0.3, 0.3, 0.3, 1));
 		add(lightCase);
 
@@ -454,14 +456,16 @@ public:
 		//mirrorBox->material = mirrorMaterial;
 
         // some light sources for GI
-        Cube* light1 = new Cube(glm::vec3(-2.3,1,0), glm::vec3(0.6,0.5,20));
+        Cube* light1 = new Cube(glm::vec3(-2.4,0,0), glm::vec3(0.6,0.5,20));
         light1->material = parameterisedMaterial(5, 2);        
         light1->setRotation(glm::vec3(0,0,PI/4));
         add(light1);
-        Cube* light2 = new Cube(glm::vec3(+2.3,1,0), glm::vec3(0.6,0.5,20));
+        Cube* light2 = new Cube(glm::vec3(+2.4,0,0), glm::vec3(0.6,0.5,20));
         light2->material = parameterisedMaterial(6, 2);        
         light2->setRotation(glm::vec3(0,0,PI/4));
         add(light2);
+		light1->material->emisiveColor *= 2.7f;
+		light2->material->emisiveColor *= 2.7f;
         
         camera->lightingModel = LM_GI; // gi looks way better, but is slow :(
 
@@ -473,7 +477,7 @@ public:
         camera->move(-2,0,0);
 
         // blue sky light
-        camera->backgroundColor = Color(0.03,0.05,0.10,1) * 2.0f;
+        camera->backgroundColor = Color(0.03,0.05,0.10,1) * 0.1f;
     }
 };
 
@@ -517,7 +521,7 @@ public:
         add(blockLight2);
         
         // blue sky light
-        camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.6f;
+        camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.26f;
 
         // setup camera and lighting
         camera->lightingModel = LM_GI;

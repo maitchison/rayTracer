@@ -20,6 +20,7 @@ v0.2 79k (Pass rays by reference, rays have limited length
 Planned features
 [ ] HDR output with bloom (and gamma)
 [ ] Voxelisation (with visualisation mode)
+[ ] Clustering working
 
 */
 
@@ -85,7 +86,7 @@ const int RM_NONE = 0;
 const int RM_LQ = 1;
 const int RM_HQ = 2;
 
-const int requiredPasses = 16;
+const int requiredPasses = 256;
 
 RUN_MODE mode = RM_MANUAL;
 
