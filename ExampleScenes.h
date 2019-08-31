@@ -488,6 +488,25 @@ public:
 // This scene contains a single dragon demonstrating the mesh rendering.
 // --------------------------------------------------------------------
 
+
+ContainerObject* PetaStool(glm::vec3 pos, glm::vec3 size, Material* innerMaterial) {
+
+	Cube* inner = new Cube(pos, glm::vec3(size.x, size.y - 0.1f, size.z));
+	inner->material = innerMaterial;
+
+	float lip = 0.1f;
+	
+	Cube* cover = new Cube(glm::vec3(pos.x, pos.y + (size.y / 2) - 0.05f, pos.z), glm::vec3(size.x + lip, 0.1f, size.z + lip));
+	Cube* base = new Cube(glm::vec3(pos.x, pos.y - (size.y / 2) + 0.05f, pos.z), glm::vec3(size.x + lip, 0.1f, size.z + lip));
+
+	ContainerObject* result = new ContainerObject();
+
+	result->add(inner);
+	result->add(cover);
+	result->add(base);
+	return result;
+}
+
 class DragonScene : public Scene
 {    
 public:
@@ -497,37 +516,57 @@ public:
         name = "Dragon";
 
         // default light
-        add(new Light(glm::vec3(-10,30,0), 0.02f * Color(1,1,1,1)));    
+        add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
+
+		// test sphere
+		//Sphere* test = new Sphere(glm::vec3(0, 0, -7.5), 10);
+		//add(test);
+
         
         // ground plane
+		Material* rockMaterial = Material::Default(Color(1, 1, 1, 1));
+		rockMaterial->diffuseTexture = new BitmapTexture("./textures/Concrete_011_COLOR.png");
+		rockMaterial->normalTexture = new BitmapTexture("./textures/Concrete_011_NORM.png", true);
         Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
         plane->material->diffuseColor = Color(0.3f,0.3f,0.3f,1);
-        plane->material->reflectivity = 0.25;
-        plane->material->reflectionBlur = 0.1f; // in GI mode specular hilights are handled as blury reflections.
+        //plane->material->reflectivity = 0.25;
+        //plane->material->reflectionBlur = 0.1f; // in GI mode specular hilights are handled as blury reflections.
+		plane->material = rockMaterial;
+		plane->uvScale = glm::vec2(0.5, 0.5);
         add(plane); 
-        
+
+		
         // our high res mesh
         Mesh* mesh = new Mesh(glm::vec3(0,0,0), ReadPLY("./dragon.ply", 20.0f));    
-		mesh->setLocation(glm::vec3(0,-1,-7.5));        
+		mesh->setLocation(glm::vec3(-1-1,-1.1,-7.5-0.2));        
+		mesh->setRotation(glm::vec3(0, 0.5, 0));
 		add(mesh); 		
-        
-        // lighting blocks    
-        Cube* blockLight1 = new Cube(glm::vec3(0,0,-10),glm::vec3(4,2,0.5));
-        blockLight1->material = Material::Emissive(Color(1,0,0,1) * 0.5f);
-        add(blockLight1);
+                		
+		// left light
+		Material* redLightMaterial = Material::Emissive(Color(1, 0.02, 0.01, 1) * 0.5f);
+		redLightMaterial->reflectivity = 0.5f;
+		redLightMaterial->reflectionBlur = 0.1f;
+		add(PetaStool(glm::vec3(-1, 0.50, -7.5-2.5), glm::vec3(6, 1, 0.5), redLightMaterial));
 
-        Cube* blockLight2 = new Cube(glm::vec3(0,0,-5),glm::vec3(4,2,0.5));
-        blockLight2->material = Material::Emissive(Color(0,1,0,1) * 0.33f);
-        add(blockLight2);
-		
+		// right light
+		Material* blueLightMaterial = Material::Emissive(Color(0.01, 0.02, 1, 1) * 0.23f);
+		blueLightMaterial->reflectivity = 0.5f;
+		blueLightMaterial->reflectionBlur = 0.1f;
+		add(PetaStool(glm::vec3(-1, 0.50, -7.5+2.5), glm::vec3(6, 1, 0.5), blueLightMaterial));
+
+		// very shiny mirror
+		Material* mirrorMaterial= Material::Default(Color(0.01, 0.02, 0.02, 1));
+		mirrorMaterial->reflectivity = 0.5f;
+		mirrorMaterial->reflectionBlur = 0.1f;
+		//add(PetaStool(glm::vec3(5.5, 1, -7.5), glm::vec3(4, 1, 20), mirrorMaterial));			
+        
         // blue sky light
-        camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.26f;
+        camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.08f; // 0.02
 
         // setup camera and lighting
         camera->lightingModel = LM_GI;
-        camera->setLocation(glm::vec3(-3.5,2,-7.5));
-        camera->setRotation(glm::vec3(0,4.7,0));
-        camera->move(-1,0,0);
+        camera->setLocation(glm::vec3(-8.5,1,-7.5));
+        camera->setRotation(glm::vec3(0.1f,4.7123,0.1f));
     }
 };
 
@@ -564,15 +603,15 @@ public:
 
 		// lighting blocks    
 		Cube* blockLight1 = new Cube(glm::vec3(0, 0, -10), glm::vec3(4, 2, 0.5));
-		blockLight1->material = Material::Emissive(Color(1, 0, 0, 1) * 0.5f);
+		blockLight1->material = Material::Emissive(Color(1, 0, 0, 1) * 0.5f); //red
 		add(blockLight1);
 
 		Cube* blockLight2 = new Cube(glm::vec3(0, 0, -5), glm::vec3(4, 2, 0.5));
-		blockLight2->material = Material::Emissive(Color(0, 1, 0, 1) * 0.33f);
+		blockLight2->material = Material::Emissive(Color(0, 1, 0, 1) * 0.33f); //green
 		add(blockLight2);
 
-		Cube* blockLight3 = new Cube(glm::vec3(5, 0, -7.5), glm::vec3(1, 4, 8));
-		blockLight3->material = Material::Emissive(Color(1, 1, 1, 1) * 3.33f);
+		Cube* blockLight3 = new Cube(glm::vec3(5, 0, -7.5), glm::vec3(1, 4, 50));
+		blockLight3->material = Material::Emissive(Color(1, 1, 1, 1) * 3.33f); //white
 		add(blockLight3);
 
 		// blue sky light
@@ -580,7 +619,7 @@ public:
 
 		// setup camera and lighting
 		camera->lightingModel = LM_GI;
-		camera->setLocation(glm::vec3(-3.5, 2, -7.5));
+		camera->setLocation(glm::vec3(-2.5, 1.5, -7.5));
 		camera->setRotation(glm::vec3(0, 4.7, 0));
 		camera->move(-1, 0, 0);
 	}

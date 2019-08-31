@@ -17,8 +17,14 @@
 #endif
 
 
-const int SCREEN_WIDTH = 2560 / 2;
-const int SCREEN_HEIGHT = 1440 / 2;
+//const int SCREEN_WIDTH = 2560 / 2;
+//const int SCREEN_HEIGHT = 1440 / 2;
+
+// A1 poster
+
+const int SCREEN_WIDTH = 7016;
+const int SCREEN_HEIGHT = 9933;
+
 
 class GFX
 {

@@ -20,7 +20,7 @@ protected:
     glm::vec3 bitangent;       // The bitangent vector
 
     bool bounded; // If true plane is defined by the four vertices, otherwise it is defined by first point and normal.
-
+public:
     glm::vec2 uvScale;
     
 

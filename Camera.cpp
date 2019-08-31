@@ -78,7 +78,8 @@ void Camera::calculateLighting(RayIntersectionResult intersection, ContainerObje
     // accumulate light.
     ambientLightSum += light->ambientLight * light->color;
     diffuseLightSum += diffuseLight * light->color;
-    specularLightSum += specularLight * light->color;
+    specularLightSum += specularLight * light->color;	
+
 }
 
 RayIntersectionResult Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
@@ -317,6 +318,12 @@ RayIntersectionResult Camera::trace(Ray ray, Scene* scene, int depth, int giSamp
         }
     }
 
+	// apply fog
+	if (ray.collision.didCollide()) {
+		float fogFactor = 1-glm::pow(2, -ray.collision.t * 0.15f);
+		color = backgroundColor * fogFactor + (1 - fogFactor) * color;
+	}
+
 	result.color = color;
     
 	return result;
@@ -325,7 +332,7 @@ RayIntersectionResult Camera::trace(Ray ray, Scene* scene, int depth, int giSamp
 void Camera::renderPixel(Scene* scene, int pixel)
 {        
 
-    float aspectRatio = float(SCREEN_WIDTH / SCREEN_HEIGHT);            
+    float aspectRatio = float(SCREEN_WIDTH) / SCREEN_HEIGHT;            
 
     int x = pixel % SCREEN_WIDTH;
     int y = pixel / SCREEN_WIDTH;        
