@@ -98,7 +98,7 @@ int counter = 0;
 int frameOn = 0;
 
 int render_mode = RM_LQ;
-int initialScene = 6;
+int initialScene = 0;
 
 int passes = 0;
 

@@ -28,7 +28,7 @@ public:
 	glm::vec3 tangent;
 
 	// uv co-ords of target at intersection point.
-	glm::vec2 uv;
+	glm::vec2 uv = glm::vec2(0, 0);
 
 	// radiance sample at location (if calculated)
 	Color color = Color(0, 0, 0, 1);

@@ -17,8 +17,8 @@
 #endif
 
 
-const int SCREEN_WIDTH = 2560 / 1;
-const int SCREEN_HEIGHT = 1440 / 1;
+const int SCREEN_WIDTH = 2560 / 2;
+const int SCREEN_HEIGHT = 1440 / 2;
 
 class GFX
 {

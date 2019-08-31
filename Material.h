@@ -84,6 +84,7 @@ public:
     {
         Material* material = new Material();
         material->diffuseTexture = new CheckerboardTexture(scale, color1, color2);                
+
         return material;
     }
 

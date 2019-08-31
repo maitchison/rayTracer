@@ -133,6 +133,7 @@ public:
     	int x = (u > 0) ? int(u * scale) : int(-u * scale + 1);
 		int y = (v > 0) ? int(v * scale) : int(-v * scale + 1);
 		bool cell = (x+y) & 1;        
+
         return cell ? color2 : color1;
     }    
 };

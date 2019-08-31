@@ -609,24 +609,24 @@ public:
 
         Plane* plane = new Plane(glm::vec3(0, -20, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
 
-        sphere1->material = Material::Default(Color(1,1,1,0.1));
+        sphere1->material = Material::Checkerboard();
         sphere2->material = Material::Checkerboard();
         sphere3->material = Material::Reflective(Color(0,1,0,1));
         sphere3->material->reflectionBlur = 0.3f;
-        plane->material = Material::Checkerboard(1.0f);		
+        plane->material = Material::Checkerboard(1.0f);				
+
         
         //--Add the above to the list of scene objects.
         add(plane); 
-		/*
+		
         add(sphere1);     
-        add(sphere2); 
-        add(sphere3);     
-		*/
+        //add(sphere2); 
+        //add(sphere3);     				
 
         // origin marker
 		SceneObject* marker = new Sphere(glm::vec3(0, -20, 0), 3.0f);
 		marker->material = Material::Emissive(Color(1, 0, 0, 1));
-        add(marker);
+        //add(marker);
 
 		// simple lighting
 		camera->lightingModel = LM_DIRECT;
@@ -716,8 +716,10 @@ public:
         Plane* rightPlane = new Plane(glm::vec3(+40,0,0), glm::vec3(-1,0,0));
         Plane* backPlane = new Plane(glm::vec3(0,0,-80), glm::vec3(0,0,1));
         Plane* forePlane = new Plane(glm::vec3(0,0,20), glm::vec3(0,0,-1));
-        Plane* floorPlane = new Plane(glm::vec3(0,40,0), glm::vec3(0,1,0));
-        Plane* ceilingPlane = new Plane(glm::vec3(0,-40,0), glm::vec3(0,-1,0));
+
+        Plane* floorPlane = new Plane(glm::vec3(0,-40,0), glm::vec3(0,1,0));
+
+        Plane* ceilingPlane = new Plane(glm::vec3(0,40,0), glm::vec3(0,-1,0));
 
         // make the colors a little pastal.
         leftPlane->material = Material::Default(Color(0.9,0.1,0.1,1.0));

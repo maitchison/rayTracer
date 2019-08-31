@@ -208,10 +208,10 @@ public:
 
         bool didIntersect = intersectObject(ray);
 
-        if (didIntersect && (ray->collision.uv.x == 0) && ray->collision.target->material->needsUV()) {
+        if (didIntersect && ray->collision.target->material->needsUV()) {
             // fetch uv only if required.
 			ray->collision.uv = ray->collision.target->getUV(ray->collision.local);
-        }
+        }		
 
 		if (didIntersect) {
 			// if we intersected the object, make sure to ignore any objects more distant from this point.

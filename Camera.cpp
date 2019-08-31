@@ -104,7 +104,7 @@ RayIntersectionResult Camera::trace(Ray ray, Scene* scene, int depth, int giSamp
             // uv co-ords are not always generated, so generate them here.
             if (ray.collision.didCollide()) {
 				ray.collision.uv = ray.collision.target->getUV(ray.collision.local);
-            }
+			}			
             result.color = Color(ray.collision.uv.x, ray.collision.uv.y, 0.4f, 1);
 			return result;
         case LM_DEPTH: 
@@ -166,7 +166,7 @@ RayIntersectionResult Camera::trace(Ray ray, Scene* scene, int depth, int giSamp
     if (giSamples > 0) {
 
 		// sub surface scatter
-		if (material->scatter > 0.0f && !ray.sssRay && !ray.giRay) {			
+		if (material->scatter > 0.0f && !ray.sssRay && !ray.giRay) {						
 			for (int i = 0; i < giSamples; i++) {
 				glm::vec3 rayDir;
 				rayDir = glm::normalize(glm::vec3(randf() - 0.5f, randf() - 0.5f, randf() - 0.5f));
@@ -243,7 +243,7 @@ RayIntersectionResult Camera::trace(Ray ray, Scene* scene, int depth, int giSamp
 			sampleRadiance = trace(giRay, scene, depth + 1, giSamples > 1 ? 1 : 0).color;
 
             if (sampleRadiance.r != sampleRadiance.r) {
-                printf("Hmm, radiance is nan?\n");
+                printf("Hmm, radiance is NaN?\n");
                 continue;
             }
 
@@ -312,7 +312,7 @@ RayIntersectionResult Camera::trace(Ray ray, Scene* scene, int depth, int giSamp
                 Color refractedCol = trace(exitRay, scene, depth+1, giSamples).color; 
                 color += (1.0f-materialColor.a)*refractedCol;
             } else {
-                // this case shouldn't happen, but might due to rounding... just ignore                 
+                // this case shouldn't happen, but might due to rounding... just ignore                 				
             }
         }
     }
@@ -373,7 +373,10 @@ void Camera::renderPixel(Scene* scene, int pixel)
         gfx.putPixel(x, y+2, Color(1,1,1,1), true);                
     }
 
-    gfx.addSample(x, y, outputCol, 0.01f + superSample);                                	
+	// stub:
+    //gfx.addSample(x, y, outputCol, 0.01f + superSample);                                	
+	gfx.putPixel(x, y, outputCol);
+
 }
 
 /** Renders given number of pixels before returning control. */
