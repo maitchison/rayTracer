@@ -373,9 +373,7 @@ void Camera::renderPixel(Scene* scene, int pixel)
         gfx.putPixel(x, y+2, Color(1,1,1,1), true);                
     }
 
-	// stub:
-    //gfx.addSample(x, y, outputCol, 0.01f + superSample);                                	
-	gfx.putPixel(x, y, outputCol);
+	gfx.addSample(x, y, outputCol, 0.01f + superSample);                                		
 
 }
 
