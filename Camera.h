@@ -41,11 +41,7 @@ protected:
     float fov = 90.0f;
 
 	int pixelOn = 0;
-
-    // a bit of a hack, but this is the intersection result from the last call to 'trace'.
-    // idealy I'd return this and the color from the trace function in some kind of struct.
-    RayIntersectionResult lastTraceIntersection;
-
+    
     // render a single pixel
     void renderPixel(Scene* scene, int pixel);
     
@@ -85,9 +81,9 @@ public:
      * @scene The scene to trace through
      * @depth Recusion depth
      * @giSamples Number of GI samples to use, 0 to disable.
-     * @returns color at the interesection point of the ray and the scene.
+     * @returns intersection point including color.
      **/
-	Color trace(Ray ray, Scene* scene, int depth = 0, int giSamples = 0);
+	RayIntersectionResult trace(Ray ray, Scene* scene, int depth = 0, int giSamples = 0);
 	
 	/** Render this number of pixels.  Rendering can be done bit by bit.  
 	 @param pixels: maximum number of pixels to render.  -1 renders entire image.

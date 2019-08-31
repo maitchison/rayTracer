@@ -412,6 +412,7 @@ public:
                 }
                 ReferenceObject* dragonCopy = new ReferenceObject(glm::vec3((i-(NUM_OBJECTS_X/2))*1.2,-0.5,(j-(NUM_OBJECTS_Y/2))*2), dragon);
                 dragonCopy->setRotation(glm::vec3(0, (randf()-0.5f)*PI*0.3f + (0.4f*PI), 0));
+				dragonCopy->material->scatter = 0.5f;
                 //dragonCopy->material = parameterisedMaterial(i+(j*3), 0);                
                 dragons->add(dragonCopy); 
             }    
@@ -442,12 +443,12 @@ public:
 		//mirrorBox->castsShadows = false;
 		//add(mirrorBox);
 
-		Cube* lightBox = new Cube(glm::vec3(0, 10, 0), glm::vec3(5, 1, 5));
-		lightBox->material = Material::Emissive(Color(1, 1, 1, 1)*0.5f);
+		Cube* lightBox = new Cube(glm::vec3(0, 4, 0), glm::vec3(5, 1, 5));
+		lightBox->material = Material::Emissive(Color(1, 1, 1, 1)*3.5f);
 		lightBox->castsShadows = false;
 		add(lightBox);
 
-		Cube* lightCase = new Cube(glm::vec3(0, 10, 0), glm::vec3(5.5, 0.8, 5.5));
+		Cube* lightCase = new Cube(glm::vec3(0, 4.2, 0), glm::vec3(5.5, 1, 5.5));
 		lightCase->material = Material::Default(Color(0.3, 0.3, 0.3, 1));
 		add(lightCase);
 
@@ -464,8 +465,8 @@ public:
         light2->material = parameterisedMaterial(6, 2);        
         light2->setRotation(glm::vec3(0,0,PI/4));
         add(light2);
-		light1->material->emisiveColor *= 2.7f;
-		light2->material->emisiveColor *= 2.7f;
+		light1->material->emisiveColor *= 1.0f;
+		light2->material->emisiveColor *= 1.0f;
         
         camera->lightingModel = LM_GI; // gi looks way better, but is slow :(
 
@@ -496,20 +497,19 @@ public:
         name = "Dragon";
 
         // default light
-        add(new Light(glm::vec3(-10,30,0), 0.5f * Color(1,1,1,1)));    
+        add(new Light(glm::vec3(-10,30,0), 0.02f * Color(1,1,1,1)));    
         
         // ground plane
         Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0,0,1));        
         plane->material->diffuseColor = Color(0.3f,0.3f,0.3f,1);
-
         plane->material->reflectivity = 0.25;
         plane->material->reflectionBlur = 0.1f; // in GI mode specular hilights are handled as blury reflections.
         add(plane); 
         
         // our high res mesh
         Mesh* mesh = new Mesh(glm::vec3(0,0,0), ReadPLY("./dragon.ply", 20.0f));    
-        mesh->setLocation(glm::vec3(0,-1,-7.5));        
-        add(mesh); 
+		mesh->setLocation(glm::vec3(0,-1,-7.5));        
+		add(mesh); 		
         
         // lighting blocks    
         Cube* blockLight1 = new Cube(glm::vec3(0,0,-10),glm::vec3(4,2,0.5));
@@ -519,7 +519,7 @@ public:
         Cube* blockLight2 = new Cube(glm::vec3(0,0,-5),glm::vec3(4,2,0.5));
         blockLight2->material = Material::Emissive(Color(0,1,0,1) * 0.33f);
         add(blockLight2);
-        
+		
         // blue sky light
         camera->backgroundColor = Color(0.03,0.05,0.15,1) * 0.26f;
 
@@ -529,6 +529,61 @@ public:
         camera->setRotation(glm::vec3(0,4.7,0));
         camera->move(-1,0,0);
     }
+};
+
+// --------------------------------------------------------------------
+// Subsurface scatter scene
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+
+class ScatterScene : public Scene
+{
+public:
+
+	void loadScene() override {
+
+		name = "Scatter";
+
+		// default light
+		add(new Light(glm::vec3(-10, 30, 0), 0.5f * Color(1, 1, 1, 1)));
+
+		// ground plane
+		Plane* plane = new Plane(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1));
+		plane->material->diffuseColor = Color(0.3f, 0.3f, 0.3f, 1);
+
+		//plane->material->reflectivity = 0.25;
+		//plane->material->reflectionBlur = 0.1f; // in GI mode specular hilights are handled as blury reflections.
+		add(plane);
+
+		// our high res mesh
+		Mesh* mesh = new Mesh(glm::vec3(0,0,0), ReadPLY("./dragon.ply", 20.0f));    
+		//Mesh* mesh = new Mesh(glm::vec3(0, 0, 0), ReadPLY("./dragon_vrip_res4.ply", 20.0f));
+		mesh->setLocation(glm::vec3(0, -1.05, -7.5));
+		mesh->material->scatter = 0.5f;
+		add(mesh);
+
+		// lighting blocks    
+		Cube* blockLight1 = new Cube(glm::vec3(0, 0, -10), glm::vec3(4, 2, 0.5));
+		blockLight1->material = Material::Emissive(Color(1, 0, 0, 1) * 0.5f);
+		add(blockLight1);
+
+		Cube* blockLight2 = new Cube(glm::vec3(0, 0, -5), glm::vec3(4, 2, 0.5));
+		blockLight2->material = Material::Emissive(Color(0, 1, 0, 1) * 0.33f);
+		add(blockLight2);
+
+		Cube* blockLight3 = new Cube(glm::vec3(5, 0, -7.5), glm::vec3(1, 4, 8));
+		blockLight3->material = Material::Emissive(Color(1, 1, 1, 1) * 3.33f);
+		add(blockLight3);
+
+		// blue sky light
+		camera->backgroundColor = Color(0.03, 0.05, 0.15, 1) * 0.26f;
+
+		// setup camera and lighting
+		camera->lightingModel = LM_GI;
+		camera->setLocation(glm::vec3(-3.5, 2, -7.5));
+		camera->setRotation(glm::vec3(0, 4.7, 0));
+		camera->move(-1, 0, 0);
+	}
 };
 
 // --------------------------------------------------------------------

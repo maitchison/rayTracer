@@ -81,17 +81,23 @@ void Camera::calculateLighting(RayIntersectionResult intersection, ContainerObje
     specularLightSum += specularLight * light->color;
 }
 
-Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
-{        
-    if (depth > MAX_RECUSION_DEPTH) {
-        lastTraceIntersection = RayIntersectionResult::NoCollision();
-        return Color(0,0,0,1);
+RayIntersectionResult Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
+{       
+	RayIntersectionResult result = RayIntersectionResult();
+
+    if (depth > MAX_RECUSION_DEPTH) {        		
+		return result;
     }
 
     bool didCollide = scene->intersect(&ray);
-    
-    lastTraceIntersection = ray.collision;
 
+	if (ray.reverseNormal) {
+		ray.collision.normal *= -1;
+		ray.collision.tangent *= -1;		
+	}
+
+	result = ray.collision;
+       
     // sepcial lighting models.
     switch (lightingModel) {
         case LM_UV: 
@@ -99,16 +105,24 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             if (ray.collision.didCollide()) {
 				ray.collision.uv = ray.collision.target->getUV(ray.collision.local);
             }
-            return Color(ray.collision.uv.x, ray.collision.uv.y, 0.4f, 1);
+            result.color = Color(ray.collision.uv.x, ray.collision.uv.y, 0.4f, 1);
+			return result;
         case LM_DEPTH: 
-            return Color(ray.collision.t/100, ray.collision.t/100, ray.collision.t/100,1);
+			result.color = Color(ray.collision.t/100, ray.collision.t/100, ray.collision.t/100,1);
+			return result;
         case LM_WORLD: 
-            return Color(ray.collision.location/30.0f,1.0);
+			result.color = Color(ray.collision.location/30.0f,1.0);
+			return result;
         case LM_LOCAL: 
-            return Color(ray.collision.local/5.0f,1.0);
+			result.color = Color(ray.collision.local/5.0f,1.0);
+			return result;
     }    
 
-    if (!didCollide) return backgroundColor;      //If there is no intersection return background colour
+	//If there is no intersection return background colour
+	if (!didCollide) {
+		result.color = backgroundColor;
+		return result;
+	};      
 
     Material* material = ray.collision.target->material;
     
@@ -133,7 +147,8 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
     }
 
     if (lightingModel == LM_NORMAL) {
-        return Color(ray.collision.normal,1.0f);
+        result.color = Color(ray.collision.normal,1.0f);
+		return result;
     }
 
     // sum up the lighting from all lights.
@@ -149,7 +164,45 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
 
     // add in global lighting (if required)
     if (giSamples > 0) {
-                    
+
+		// sub surface scatter
+		if (material->scatter > 0.0f && !ray.sssRay && !ray.giRay) {			
+			for (int i = 0; i < giSamples; i++) {
+				glm::vec3 rayDir;
+				rayDir = glm::normalize(glm::vec3(randf() - 0.5f, randf() - 0.5f, randf() - 0.5f));
+				float diffusePower = glm::dot(rayDir, -ray.collision.normal);
+				if (diffusePower < 0) {
+					rayDir = -rayDir;					
+				}				
+				
+				Ray giRay;
+				giRay = Ray(ray.collision.location + rayDir * OFFSET_BIAS, rayDir);
+				giRay.sssRay = true; 
+				giRay.reverseNormal = true;
+				giRay.length = 1.0f; // don't need to look very far
+
+				Color sampleRadiance;
+				RayIntersectionResult sampleTrace;
+
+				sampleTrace = trace(giRay, scene, depth + 1, giSamples/8);
+
+				if (!sampleTrace.didCollide()) continue;
+
+				// it would be nice to intersect object and allow others to collide, but for the moment just do this.
+				if (sampleTrace.target != ray.collision.target) continue;
+
+				sampleRadiance = sampleTrace.color;
+				
+				// distance samples get less sub surface scattering.
+				// not sure what the best approximation to this is, probably not inverse square though.  Might be exponential.
+				// I think I read a paper once about a good approximation using 4 gausians but I forget the reference.
+				float factor = 10.0f * min(1.0f, 1.0f / (1.0f+0.1f*glm::length(sampleTrace.location - ray.collision.location)));
+
+				diffuseLight += sampleRadiance * (PI*2.0f) * (1.0f / giSamples) * factor * material->scatter;
+			}
+		}
+
+		// surface scatter
         for (int i = 0; i < giSamples; i++) {
             // trace a path from this point in a random direction, then use that points radience as a 'light'                        
             // we take the ray pointing in the normal direction then 'defocus' it by up to 90 degrees.  This ?should? give uniform
@@ -187,7 +240,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             // We then test the color of this ray.  
             // We set giSamples to 1 if gi was enabled, and 0 otherwise, this gives a 2 bounce lighting model.            
 			Color sampleRadiance;
-			sampleRadiance = trace(giRay, scene, depth + 1, giSamples > 1 ? 1 : 0);
+			sampleRadiance = trace(giRay, scene, depth + 1, giSamples > 1 ? 1 : 0).color;
 
             if (sampleRadiance.r != sampleRadiance.r) {
                 printf("Hmm, radiance is nan?\n");
@@ -203,7 +256,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
 
 			float factor = (giSamples == 1) ? 0.1f: 1.0f; // for some reason reducing the bounced light is too strong, maybe PDF is wrong?
             
-            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/giSamples) * sqrtDiffusePower) * factor;
+            diffuseLight += (sampleRadiance * (PI*2.0f) * (1.0f/giSamples) * sqrtDiffusePower) * factor * (1.0f-material->scatter);
         }
         
     }
@@ -224,7 +277,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
 
 		Ray reflectedRay;
 		reflectedRay = Ray(ray.collision.location + reflectedDir * OFFSET_BIAS, reflectedDir);
-        Color reflectedCol = trace(reflectedRay, scene, depth+1, giSamples); 
+        Color reflectedCol = trace(reflectedRay, scene, depth+1, giSamples).color; 
         color += (material->reflectivity*reflectedCol);        
     }
 
@@ -236,7 +289,7 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
     
             // start the ray a little further on from where we hit.
             Ray transmittedRay = Ray(ray.collision.location + OFFSET_BIAS * ray.dir, ray.dir);
-            Color transmittedCol = trace(transmittedRay, scene, depth, giSamples); 
+            Color transmittedCol = trace(transmittedRay, scene, depth, giSamples).color; 
             color += (1.0f-materialColor.a)*transmittedCol;
             
         } else {            
@@ -256,15 +309,17 @@ Color Camera::trace(Ray ray, Scene* scene, int depth, int giSamples)
             if (exitPoint.didCollide()) {
                 glm::vec3 exitDir = glm::refract(refractedDir, -exitPoint.normal, material->refractionIndex);
                 Ray exitRay = Ray(exitPoint.location + exitDir * 0.001f, exitDir);
-                Color refractedCol = trace(exitRay, scene, depth+1, giSamples); 
+                Color refractedCol = trace(exitRay, scene, depth+1, giSamples).color; 
                 color += (1.0f-materialColor.a)*refractedCol;
             } else {
                 // this case shouldn't happen, but might due to rounding... just ignore                 
             }
         }
     }
+
+	result.color = color;
     
-	return color;
+	return result;
 }
 
 void Camera::renderPixel(Scene* scene, int pixel)
@@ -301,7 +356,7 @@ void Camera::renderPixel(Scene* scene, int pixel)
         }
         
         Ray ray = Ray(location, dir);
-        Color col = trace(ray, scene, 0, (lightingModel == LM_GI) ? GI_SAMPLES : 0);
+        Color col = trace(ray, scene, 0, (lightingModel == LM_GI) ? GI_SAMPLES : 0).color;
         outputCol = outputCol + (col * (1.0f/requiredSamples));
     }
             

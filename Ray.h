@@ -30,6 +30,9 @@ public:
 	// uv co-ords of target at intersection point.
 	glm::vec2 uv;
 
+	// radiance sample at location (if calculated)
+	Color color = Color(0, 0, 0, 1);
+
 	// pointer to object we collided with.
 	SceneObject* target = NULL;
 
@@ -75,6 +78,10 @@ public:
     bool shadowTrace = false;
     // This is a global illuminaton ray trace.
     bool giRay = false;
+	// This is a sub surface scatter ray trace.
+	bool sssRay = false;
+	// Test reverse side of material on collision.
+	bool reverseNormal = false;
     
     Ray()
 	{

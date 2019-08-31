@@ -46,7 +46,7 @@ public:
     }
 
     bool showBounds = false;
-    bool useContainerMaterial = false;
+    bool useContainerMaterial = false;	
 
     /** Adds object to container. */
     virtual void add(SceneObject* object);

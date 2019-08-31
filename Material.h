@@ -29,6 +29,7 @@ public:
     float reflectionBlur = 0.0f;            // how blured the reflection should be (in radians), requires super sampling to look good.
     float refractionIndex = 1.0f;           // refractive index of object.  Must set material diffuse alpha to see this.    
     float shininess = 25.0f;                // how shiny the object is 
+	float scatter = 0.0;					// how much sub surface scattering to apply (0 = on, 1 = full)
     
     /* Create a default white material. */
 	Material() {        

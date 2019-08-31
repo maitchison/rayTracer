@@ -15,7 +15,7 @@ bool ContainerObject::intersectObject(Ray* ray)
 
 	// big hack, use bounds if we are far away.  Should be fine for GI rays.	
 	bool FORCE_SHOW_BV = false;
-	if ((FORCE_SHOW_BV || ray->giRay) && boundingVolume.type != BV_NONE) {
+	if ((FORCE_SHOW_BV || ray->giRay) && boundingVolume.type != BV_NONE && useContainerMaterial) {
 		float distanceToObject2 = glm::length2(ray->pos);
 		float bvRadius2 = boundingVolume.getRadius(); 
 		bvRadius2 = bvRadius2 * bvRadius2;

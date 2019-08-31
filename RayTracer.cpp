@@ -21,6 +21,7 @@ Planned features
 [ ] HDR output with bloom (and gamma)
 [ ] Voxelisation (with visualisation mode)
 [ ] Clustering working
+[ ] Record radiance samples with a breakdown of ambient, diffuse, specular, GI, scattering etc. 
 
 */
 
@@ -192,6 +193,7 @@ void keyboard(unsigned char key, int x, int y)
         case '6': activateScene(6); break;
         case '7': activateScene(7); break;
         case '8': activateScene(8); break;
+		case '9': activateScene(9); break;
         case 'w': camera->move(+3,0); break;
         case 's': camera->move(-3,0); break;
         case 'a': camera->move(0, -3); break;
@@ -316,6 +318,7 @@ void initialize()
     scenes.push_back(new ManyDragonsScene());        
     scenes.push_back(new AreaLightScene());        
     scenes.push_back(new MillionCubes());        
+	scenes.push_back(new ScatterScene());
     
     
     activateScene(initialScene);
